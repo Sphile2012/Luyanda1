@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Shield, Zap, TrendingUp } from 'lucide-react';
 
-const heroCar = '/image.png';
+import heroBg from '../../assets/Screenshot_2026-06-15_154532.png';
 
 const stats = [
   { value: 350, label: 'Deals Closed', suffix: '+' },
@@ -86,58 +86,41 @@ const Home = () => {
     <div className="w-full font-sans">
 
       {/* ── Hero ── */}
-      <section className="relative bg-[#0a0c12] min-h-screen flex items-center overflow-hidden">
-        {/* Subtle radial light behind car */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[680px] h-[680px] bg-red-700/10 rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center py-32 lg:py-24">
-
-            {/* Left — copy */}
-            <div className="order-2 lg:order-1">
-              <span className="inline-block text-[11px] font-bold tracking-[0.22em] uppercase text-brand-400 mb-7">
-                South Africa's Car Matchmaking Service
-              </span>
-              <h1 className="text-[clamp(2.8rem,6vw,4.5rem)] font-extrabold leading-[1.06] text-white mb-6">
-                We find the deal.<br />
-                <span className="text-red-500">You drive the car.</span>
-              </h1>
-              <p className="text-[17px] text-gray-400 leading-[1.75] max-w-[480px] mb-10">
-                Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/buyers"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-500 text-white text-[15px] font-semibold rounded-lg hover:bg-brand-600 transition-colors duration-200 shadow-lg shadow-brand-900/40"
-                >
-                  Find My Car <ArrowRight size={17} />
-                </Link>
-                <Link
-                  to="/dealerships"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 text-white text-[15px] font-semibold rounded-lg border border-white/20 hover:bg-white/8 transition-colors duration-200"
-                >
-                  Partner With Us
-                </Link>
-              </div>
-            </div>
-
-            {/* Right — car */}
-            <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-[560px]">
-                <div className="absolute -inset-4 bg-red-600/10 rounded-3xl blur-2xl" />
-                <div className="relative rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)]">
-                  <img
-                    src={heroCar}
-                    alt="Mercedes-AMG GT"
-                    className="w-full object-cover block"
-                    style={{ filter: 'sepia(0.25) saturate(1.4) hue-rotate(-15deg) brightness(0.95)' }}
-                  />
-                  {/* Subtle red colour tint */}
-                  <div className="absolute inset-0 bg-red-700/30 mix-blend-multiply pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
+      <section
+        className="relative min-h-screen flex items-center justify-center"
+        style={{
+          backgroundImage: `url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+          <p className="text-brand-400 uppercase text-sm font-semibold tracking-widest mb-6">
+            South Africa's Car Matchmaking Service
+          </p>
+          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold text-white mb-4 leading-none">
+            We find the deal.
+          </h1>
+          <p className="text-5xl sm:text-6xl lg:text-7xl font-bold text-brand-400 mb-8 leading-none">
+            You drive the car.
+          </p>
+          <p className="text-lg sm:text-xl text-gray-200 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/buyers"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-all duration-200 hover:shadow-lg"
+            >
+              Find My Car <ArrowRight size={20} />
+            </Link>
+            <Link
+              to="/dealerships"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-black/40 backdrop-blur-sm text-white font-semibold rounded-full border border-white/40 hover:bg-black/60 transition-all duration-200"
+            >
+              Partner With Us
+            </Link>
           </div>
         </div>
       </section>
