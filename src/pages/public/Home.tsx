@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, TrendingUp, Shield, Zap } from 'lucide-react';
+import heroCar from '../../assets/Screenshot_2026-06-15_154532.png';
 
-const HERO_IMG = 'https://images.pexels.com/photos/3764984/pexels-photo-3764984.jpeg?auto=compress&cs=tinysrgb&w=1920';
+const HERO_IMG = heroCar;
 
 const Home = () => {
   const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
