@@ -21,27 +21,8 @@ const About = () => {
       {/* ── Story ── */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
-
-            <div className="lg:col-span-3 space-y-6 text-gray-600 text-[17px] leading-[1.85]">
-              <p>
-                Drive Agency started with a frustration. Our founder had spent three weeks running between dealerships, filling in the same paperwork over and over, getting contradicting information about finance rates, and feeling completely out of his depth. He eventually got a car, but the experience left him thinking — this shouldn't be this hard.
-              </p>
-              <p>
-                That was in 2022. By early 2023, Drive Agency was officially open for business. The idea was straightforward: build a service that sits between the buyer and the dealership, simplifies the whole process, and makes sure the buyer always feels like someone is in their corner.
-              </p>
-              <p>
-                We're based in Gauteng but we work with dealerships and buyers across all nine provinces. Our agents — whether they work remotely or in-office — are trained specifically on South African vehicle finance. They know the products, they know the banks, and they know how to get a deal over the line even when the credit picture isn't perfect.
-              </p>
-              <p>
-                We don't charge buyers anything. Ever. Our income comes from dealerships who value the quality of the leads we send them. That setup keeps us honest — we only get paid when a buyer actually drives away happy. That alignment matters to us.
-              </p>
-              <p>
-                Today we've facilitated hundreds of deals across the country, and that number keeps growing. But honestly, what we're most proud of is the feedback. People who thought they'd never qualify for finance. First-time buyers who didn't know where to start. Families who needed something bigger but couldn't figure out how to make the numbers work. Those are the stories that keep us going.
-              </p>
-            </div>
-
-            <div className="lg:col-span-2 space-y-6">
+          <div className="flex justify-center">
+            <div className="lg:col-span-2 space-y-6 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
               <div className="bg-gray-950 rounded-2xl p-8 text-white">
                 <p className="text-5xl font-extrabold text-brand-400 leading-none">350+</p>
                 <p className="text-gray-300 mt-2 font-medium">Deals facilitated since opening</p>
@@ -55,7 +36,6 @@ const About = () => {
                 <p className="text-brand-100 mt-2 font-medium">Provinces we operate in</p>
               </div>
             </div>
-
           </div>
         </div>
       </section>
