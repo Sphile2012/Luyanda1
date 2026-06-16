@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Car, Share2 } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <Car className="w-8 h-8 text-brand-400" />
+              <img src="/image.png" alt="Drive Agency" className="h-10 w-10 rounded-lg object-cover" />
               <span className="text-xl font-bold">Drive Agency</span>
             </div>
             <p className="text-gray-400 text-sm">

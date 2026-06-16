@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Car } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -36,9 +36,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-brand-500 rounded-lg flex items-center justify-center">
-              <Car className="w-5 h-5 text-white" />
-            </div>
+            <img src="/image.png" alt="Drive Agency" className="h-10 w-10 rounded-lg object-cover" />
             <span className="text-lg font-bold text-white">Drive Agency</span>
           </Link>
 
