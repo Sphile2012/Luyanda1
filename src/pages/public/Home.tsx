@@ -1,15 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Shield, Zap, TrendingUp } from 'lucide-react';
 
-const heroBg = '/image copy.png';
-
-const stats = [
-  { value: 350, label: 'Deals Closed', suffix: '+' },
-  { value: 50, label: 'Partner Dealerships', suffix: '+' },
-  { value: 120, label: 'Active Agents', suffix: '+' },
-  { value: 2500, label: 'Happy Buyers', suffix: '+' },
-];
+const heroBg = new URL('../assets/Screenshot_2026-06-16_110040.png', import.meta.url).href;
 
 const steps = [
   { step: '01', icon: Car, title: 'Tell Us What You Want', desc: 'Share your car preferences, budget, and financial situation in a few minutes.' },
@@ -48,40 +40,8 @@ const trust = [
   { icon: Users, label: 'Expert Agents', desc: 'Nationwide professional support' },
 ];
 
-const brands = ['Toyota', 'Volkswagen', 'Ford', 'BMW', 'Mercedes-Benz', 'Hyundai', 'Kia', 'Nissan', 'Audi', 'Honda', 'Mazda', 'Isuzu', 'Haval', 'Suzuki', 'Chevrolet', 'Jeep'];
 
 const Home = () => {
-  const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
-  const statsRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !hasAnimated) {
-        setHasAnimated(true);
-        const targets = { deals: 350, dealerships: 50, agents: 120, buyers: 2500 };
-        const duration = 2000;
-        const steps = 60;
-        let step = 0;
-        const interval = setInterval(() => {
-          step++;
-          const ease = 1 - Math.pow(1 - Math.min(step / steps, 1), 3);
-          setDisplayedStats({
-            deals: Math.floor(targets.deals * ease),
-            dealerships: Math.floor(targets.dealerships * ease),
-            agents: Math.floor(targets.agents * ease),
-            buyers: Math.floor(targets.buyers * ease),
-          });
-          if (step >= steps) clearInterval(interval);
-        }, duration / steps);
-      }
-    }, { threshold: 0.1 });
-    if (statsRef.current) observer.observe(statsRef.current);
-    return () => observer.disconnect();
-  }, [hasAnimated]);
-
-  const statValues = [displayedStats.deals, displayedStats.dealerships, displayedStats.agents, displayedStats.buyers];
-
   return (
     <div className="w-full font-sans">
 
@@ -94,35 +54,6 @@ const Home = () => {
           backgroundPosition: 'center',
         }}
       />
-
-      {/* ── Stats bar ── */}
-      <section ref={statsRef} className="bg-[#0d1118] border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-20 py-14">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
-            {stats.map((s, i) => (
-              <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
-                <p className="text-4xl font-extrabold text-white mb-1 tabular-nums">
-                  {statValues[i].toLocaleString()}{s.suffix}
-                </p>
-                <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Brand ticker ── */}
-      <section className="bg-[#0a0c12] border-y border-white/5 py-5 overflow-hidden">
-        <div className="flex overflow-hidden">
-          <div className="flex gap-14 animate-scroll whitespace-nowrap">
-            {[...brands, ...brands, ...brands].map((b, i) => (
-              <span key={i} className="text-[11px] font-bold text-gray-600 uppercase tracking-[0.18em] flex-shrink-0">
-                {b}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── How it works ── */}
       <section className="bg-white py-24">
