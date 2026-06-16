@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Car, Users, Building2, CheckCircle, Shield, Zap, TrendingUp } from 'lucide-react';
+import { ArrowRight, Car, Users, Building2, CheckCircle } from 'lucide-react';
 import heroBg from '../../assets/Screenshot_2026-06-16_110040.png';
 
 const steps = [
@@ -30,13 +30,6 @@ const cards = [
     cta: 'Apply Now',
     link: '/become-agent',
   },
-];
-
-const trust = [
-  { icon: Shield, label: 'POPIA Compliant', desc: 'Your data is always protected' },
-  { icon: Zap, label: '24hr Turnaround', desc: 'Fast, efficient processing' },
-  { icon: TrendingUp, label: 'Best Finance Rates', desc: 'Competitive deals nationwide' },
-  { icon: Users, label: 'Expert Agents', desc: 'Nationwide professional support' },
 ];
 
 
@@ -76,50 +69,6 @@ const Home = () => {
                 <p className="text-gray-500 leading-relaxed text-[15px]">{item.desc}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── About ── */}
-      <section className="bg-gray-950 py-24">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
-            <div>
-              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-brand-400 mb-4 block">Our Story</span>
-              <h2 className="text-4xl md:text-[2.6rem] font-extrabold text-white mb-6 leading-tight">
-                Making Car Ownership Accessible to Every South African
-              </h2>
-              <p className="text-gray-400 text-[16px] leading-[1.8] mb-5">
-                Drive Agency was founded to remove the barriers between South Africans and their dream cars. The traditional process was frustrating, opaque, and stressful — so we built something better.
-              </p>
-              <p className="text-gray-400 text-[16px] leading-[1.8] mb-10">
-                We connect buyers with trusted dealerships and professional agents who guide every step of the journey. Our matchmaking service is completely free for buyers.
-              </p>
-
-              <div className="grid grid-cols-2 gap-5">
-                {trust.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-brand-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <item.icon className="w-4 h-4 text-brand-400" />
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold text-sm">{item.label}</p>
-                      <p className="text-gray-500 text-xs mt-0.5">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <img
-                src="https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800"
-                alt="Drive Agency team"
-                className="rounded-2xl w-full object-cover h-[420px] lg:h-[500px]"
-              />
-            </div>
-
           </div>
         </div>
       </section>
@@ -194,3 +143,4 @@ const Home = () => {
 };
 
 export default Home;
+
