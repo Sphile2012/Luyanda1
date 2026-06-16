@@ -1,14 +1,59 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Car, Users, Building2, CheckCircle, TrendingUp, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Car, Users, Building2, CheckCircle, Shield, Zap, TrendingUp } from 'lucide-react';
+
 const heroCar = '/image.png';
+
+const stats = [
+  { value: 350, label: 'Deals Closed', suffix: '+' },
+  { value: 50, label: 'Partner Dealerships', suffix: '+' },
+  { value: 120, label: 'Active Agents', suffix: '+' },
+  { value: 2500, label: 'Happy Buyers', suffix: '+' },
+];
+
+const steps = [
+  { step: '01', icon: Car, title: 'Tell Us What You Want', desc: 'Share your car preferences, budget, and financial situation in a few minutes.' },
+  { step: '02', icon: Users, title: 'We Match You', desc: 'Our agents identify the best cars and dealerships that fit your exact needs.' },
+  { step: '03', icon: CheckCircle, title: 'Drive Away', desc: 'We handle the paperwork and approval. You show up, sign, and drive.' },
+];
+
+const cards = [
+  {
+    icon: Car,
+    title: 'Car Buyers',
+    desc: "Find your perfect vehicle with financing that fits your budget. Our service is 100% free for buyers — always.",
+    cta: 'Find My Car',
+    link: '/buyers',
+  },
+  {
+    icon: Building2,
+    title: 'Dealerships',
+    desc: 'Receive a steady stream of pre-screened, qualified buyers. You focus on closing — we handle the match.',
+    cta: 'Partner With Us',
+    link: '/dealerships',
+  },
+  {
+    icon: Users,
+    title: 'Become an Agent',
+    desc: 'Build a rewarding career in vehicle finance. Earn competitive commission with full training and support.',
+    cta: 'Apply Now',
+    link: '/become-agent',
+  },
+];
+
+const trust = [
+  { icon: Shield, label: 'POPIA Compliant', desc: 'Your data is always protected' },
+  { icon: Zap, label: '24hr Turnaround', desc: 'Fast, efficient processing' },
+  { icon: TrendingUp, label: 'Best Finance Rates', desc: 'Competitive deals nationwide' },
+  { icon: Users, label: 'Expert Agents', desc: 'Nationwide professional support' },
+];
+
+const brands = ['Toyota', 'Volkswagen', 'Ford', 'BMW', 'Mercedes-Benz', 'Hyundai', 'Kia', 'Nissan', 'Audi', 'Honda', 'Mazda', 'Isuzu', 'Haval', 'Suzuki', 'Chevrolet', 'Jeep'];
 
 const Home = () => {
   const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
   const statsRef = useRef<HTMLDivElement>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
-
-  const carBrands = ['Toyota', 'Volkswagen', 'Ford', 'BMW', 'Mercedes-Benz', 'Hyundai', 'Kia', 'Nissan', 'Audi', 'Honda', 'Mazda', 'Isuzu', 'Haval', 'Suzuki', 'Chevrolet', 'Jeep'];
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
@@ -20,8 +65,7 @@ const Home = () => {
         let step = 0;
         const interval = setInterval(() => {
           step++;
-          const progress = Math.min(step / steps, 1);
-          const ease = 1 - Math.pow(1 - progress, 3);
+          const ease = 1 - Math.pow(1 - Math.min(step / steps, 1), 3);
           setDisplayedStats({
             deals: Math.floor(targets.deals * ease),
             dealerships: Math.floor(targets.dealerships * ease),
@@ -36,220 +80,196 @@ const Home = () => {
     return () => observer.disconnect();
   }, [hasAnimated]);
 
-  return (
-    <div className="w-full">
-      {/* Hero */}
-      <section className="relative min-h-screen bg-gray-950 flex items-center overflow-hidden">
-        {/* Background subtle gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
-        <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-brand-500/5 rounded-full blur-3xl pointer-events-none" />
+  const statValues = [displayedStats.deals, displayedStats.dealerships, displayedStats.agents, displayedStats.buyers];
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-24 lg:py-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-screen lg:min-h-0 lg:py-28">
-            {/* Text */}
-            <div>
-              <p className="text-brand-400 uppercase text-xs font-bold tracking-[0.2em] mb-6">
+  return (
+    <div className="w-full font-sans">
+
+      {/* ── Hero ── */}
+      <section className="relative bg-[#0a0c12] min-h-screen flex items-center overflow-hidden">
+        {/* Subtle radial light behind car */}
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[680px] h-[680px] bg-red-700/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center py-32 lg:py-24">
+
+            {/* Left — copy */}
+            <div className="order-2 lg:order-1">
+              <span className="inline-block text-[11px] font-bold tracking-[0.22em] uppercase text-brand-400 mb-7">
                 South Africa's Car Matchmaking Service
-              </p>
-              <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black text-white mb-3 leading-[1.05]">
-                We find<br />the deal.
+              </span>
+              <h1 className="text-[clamp(2.8rem,6vw,4.5rem)] font-extrabold leading-[1.06] text-white mb-6">
+                We find the deal.<br />
+                <span className="text-red-500">You drive the car.</span>
               </h1>
-              <p className="text-5xl sm:text-6xl xl:text-7xl font-black text-brand-400 mb-8 leading-[1.05]">
-                You drive<br />the car.
-              </p>
-              <p className="text-lg text-gray-400 mb-10 max-w-lg leading-relaxed">
+              <p className="text-[17px] text-gray-400 leading-[1.75] max-w-[480px] mb-10">
                 Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-wrap gap-3">
                 <Link
                   to="/buyers"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-500 text-white text-[15px] font-semibold rounded-lg hover:bg-brand-600 transition-colors duration-200 shadow-lg shadow-brand-900/40"
                 >
-                  Find My Car <ArrowRight size={20} />
+                  Find My Car <ArrowRight size={17} />
                 </Link>
                 <Link
                   to="/dealerships"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/8 backdrop-blur-sm text-white font-semibold rounded-full border border-white/20 hover:bg-white/15 transition-all duration-200"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-white text-[15px] font-semibold rounded-lg border border-white/20 hover:bg-white/8 transition-colors duration-200"
                 >
                   Partner With Us
                 </Link>
               </div>
             </div>
 
-            {/* Car image — tinted red */}
-            <div className="relative flex items-center justify-center lg:justify-end">
-              <div className="relative w-full max-w-xl">
-                {/* Glow behind car */}
-                <div className="absolute inset-0 bg-red-600/20 rounded-3xl blur-2xl scale-110 pointer-events-none" />
-                {/* Image + red color blend */}
-                <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl">
+            {/* Right — car */}
+            <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-[560px]">
+                <div className="absolute -inset-4 bg-red-600/10 rounded-3xl blur-2xl" />
+                <div className="relative rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)]">
                   <img
                     src={heroCar}
-                    alt="Red Mercedes-AMG"
+                    alt="Mercedes-AMG GT"
                     className="w-full object-cover block"
+                    style={{ filter: 'sepia(0.25) saturate(1.4) hue-rotate(-15deg) brightness(0.95)' }}
                   />
-                  <div className="absolute inset-0 bg-red-600 mix-blend-color opacity-90 pointer-events-none" />
+                  {/* Subtle red colour tint */}
+                  <div className="absolute inset-0 bg-red-700/30 mix-blend-multiply pointer-events-none" />
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section ref={statsRef} className="py-16 bg-gray-950">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { value: displayedStats.deals, label: 'Deals Closed', suffix: '+' },
-              { value: displayedStats.dealerships, label: 'Partner Dealerships', suffix: '+' },
-              { value: displayedStats.agents, label: 'Active Agents', suffix: '+' },
-              { value: displayedStats.buyers, label: 'Happy Buyers', suffix: '+' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <p className="text-4xl sm:text-5xl font-bold text-brand-400 mb-2">
-                  {stat.value.toLocaleString()}{stat.suffix}
+      {/* ── Stats bar ── */}
+      <section ref={statsRef} className="bg-[#0d1118] border-t border-white/5">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-20 py-14">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+            {stats.map((s, i) => (
+              <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
+                <p className="text-4xl font-extrabold text-white mb-1 tabular-nums">
+                  {statValues[i].toLocaleString()}{s.suffix}
                 </p>
-                <p className="text-gray-400 font-medium">{stat.label}</p>
+                <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Car Brands Ticker */}
-      <section className="py-8 bg-gray-900 overflow-hidden border-t border-b border-gray-800">
-        <div className="relative flex overflow-hidden">
-          <div className="flex gap-12 animate-scroll whitespace-nowrap">
-            {[...carBrands, ...carBrands, ...carBrands].map((brand, i) => (
-              <span key={i} className="text-sm font-semibold text-gray-500 flex-shrink-0 uppercase tracking-widest">
-                {brand}
+      {/* ── Brand ticker ── */}
+      <section className="bg-[#0a0c12] border-y border-white/5 py-5 overflow-hidden">
+        <div className="flex overflow-hidden">
+          <div className="flex gap-14 animate-scroll whitespace-nowrap">
+            {[...brands, ...brands, ...brands].map((b, i) => (
+              <span key={i} className="text-[11px] font-bold text-gray-600 uppercase tracking-[0.18em] flex-shrink-0">
+                {b}
               </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── How it works ── */}
+      <section className="bg-white py-24">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-20">
           <div className="text-center mb-16">
-            <p className="text-brand-500 uppercase text-sm font-semibold tracking-widest mb-3">Simple Process</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">From enquiry to driving away in your new car in just 3 easy steps</p>
+            <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-brand-500 mb-3 block">Simple Process</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">How It Works</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-[17px] leading-relaxed">
+              From first enquiry to driving away — three straightforward steps.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { step: '01', title: 'Tell Us', desc: 'Share your car preferences, budget, and financial situation in just a few minutes.', icon: Car },
-              { step: '02', title: 'We Match You', desc: 'We match you with cars and dealerships that perfectly fit your needs and budget.', icon: Users },
-              { step: '03', title: 'Drive Away', desc: 'Our agents guide you through approval and you drive away in your new car.', icon: CheckCircle },
-            ].map((item, i) => (
-              <div key={i} className="text-center relative group">
-                <div className="w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-105 transition-transform">
-                  <item.icon className="w-9 h-9 text-white" />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {steps.map((item, i) => (
+              <div key={i} className="group text-center">
+                <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-md group-hover:scale-105 transition-transform duration-200">
+                  <item.icon className="w-7 h-7 text-white" />
                 </div>
-                <div className="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">{item.step}</div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-900">{item.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+                <p className="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">{item.step}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
+                <p className="text-gray-500 leading-relaxed text-[15px]">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* About */}
-      <section className="py-24 bg-gray-950 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── About ── */}
+      <section className="bg-gray-950 py-24">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
             <div>
-              <p className="text-brand-400 uppercase text-sm font-semibold tracking-widest mb-3">Our Story</p>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-brand-400 mb-4 block">Our Story</span>
+              <h2 className="text-4xl md:text-[2.6rem] font-extrabold text-white mb-6 leading-tight">
                 Making Car Ownership Accessible to Every South African
               </h2>
-              <p className="text-gray-400 text-lg leading-relaxed mb-6">
-                Drive Agency was founded with a single mission: to remove the barriers between South Africans and their dream cars. We saw how the traditional car-buying process was frustrating, opaque, and stressful — so we built something better.
+              <p className="text-gray-400 text-[16px] leading-[1.8] mb-5">
+                Drive Agency was founded to remove the barriers between South Africans and their dream cars. The traditional process was frustrating, opaque, and stressful — so we built something better.
               </p>
-              <p className="text-gray-400 text-lg leading-relaxed mb-8">
-                Today, we connect thousands of buyers with trusted dealerships and professional agents who guide every step of the journey. Our matchmaking service is completely free for buyers.
+              <p className="text-gray-400 text-[16px] leading-[1.8] mb-10">
+                We connect buyers with trusted dealerships and professional agents who guide every step of the journey. Our matchmaking service is completely free for buyers.
               </p>
-              <div className="grid grid-cols-2 gap-6">
-                {[
-                  { icon: Shield, label: 'POPIA Compliant', desc: 'Your data is protected' },
-                  { icon: Zap, label: '24hr Turnaround', desc: 'Fast processing' },
-                  { icon: TrendingUp, label: 'Best Rates', desc: 'Competitive finance deals' },
-                  { icon: Users, label: 'Expert Agents', desc: 'Nationwide support' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-brand-500/20 flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-5 h-5 text-brand-400" />
+
+              <div className="grid grid-cols-2 gap-5">
+                {trust.map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-brand-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <item.icon className="w-4 h-4 text-brand-400" />
                     </div>
                     <div>
                       <p className="text-white font-semibold text-sm">{item.label}</p>
-                      <p className="text-gray-500 text-xs">{item.desc}</p>
+                      <p className="text-gray-500 text-xs mt-0.5">{item.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
             <div className="relative">
               <img
                 src="https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800"
-                alt="Drive Agency"
-                className="rounded-2xl w-full object-cover h-96 lg:h-[500px]"
+                alt="Drive Agency team"
+                className="rounded-2xl w-full object-cover h-[420px] lg:h-[500px]"
               />
-              <div className="absolute -bottom-6 -left-6 bg-brand-500 rounded-2xl p-5 shadow-xl">
-                <p className="text-3xl font-bold text-white">350+</p>
-                <p className="text-brand-100 text-sm">Deals Closed This Year</p>
+              <div className="absolute -bottom-5 -left-5 bg-brand-500 rounded-xl p-5 shadow-2xl">
+                <p className="text-3xl font-extrabold text-white leading-none">350+</p>
+                <p className="text-brand-200 text-sm mt-1">Deals Closed This Year</p>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Who We Serve */}
-      <section className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── Who we serve ── */}
+      <section className="bg-white py-24">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-20">
           <div className="text-center mb-16">
-            <p className="text-brand-500 uppercase text-sm font-semibold tracking-widest mb-3">For Everyone</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Who We Serve</h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">Whether you're a buyer, dealership, or looking for a career in car finance</p>
+            <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-brand-500 mb-3 block">For Everyone</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Who We Serve</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-[17px] leading-relaxed">
+              Whether you're buying, selling, or building a career in car finance.
+            </p>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Car,
-                title: 'Car Buyers',
-                desc: "Find your perfect car with financing that works for your budget. It's 100% free — we never charge buyers.",
-                cta: 'Find My Car',
-                link: '/buyers',
-                accent: 'bg-brand-500',
-              },
-              {
-                icon: Building2,
-                title: 'Dealerships',
-                desc: 'Access a steady stream of qualified buyers. We do the pre-screening — you just close deals and grow.',
-                cta: 'Partner With Us',
-                link: '/dealerships',
-                accent: 'bg-navy-500',
-              },
-              {
-                icon: Users,
-                title: 'Become an Agent',
-                desc: 'Earn competitive commission and build your career in car finance. Work remote or in-office.',
-                cta: 'Apply Now',
-                link: '/become-agent',
-                accent: 'bg-green-600',
-              },
-            ].map((card, i) => (
-              <div key={i} className="border border-gray-100 rounded-2xl p-8 hover:shadow-xl transition-shadow duration-300 group">
-                <div className={`w-14 h-14 ${card.accent} rounded-xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform`}>
-                  <card.icon className="w-7 h-7 text-white" />
+            {cards.map((card, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-gray-100 p-8 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group"
+              >
+                <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-500 transition-colors duration-200">
+                  <card.icon className="w-6 h-6 text-brand-500 group-hover:text-white transition-colors duration-200" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">{card.title}</h3>
-                <p className="text-gray-500 leading-relaxed mb-6">{card.desc}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{card.title}</h3>
+                <p className="text-gray-500 text-[15px] leading-relaxed mb-6">{card.desc}</p>
                 <Link
                   to={card.link}
-                  className="inline-flex items-center gap-2 font-semibold text-brand-500 hover:text-brand-600 group/link"
+                  className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand-500 hover:text-brand-700 group/link"
                 >
                   {card.cta}
                   <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
@@ -260,35 +280,36 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="relative py-24 overflow-hidden bg-navy-900">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-400 rounded-full blur-3xl"></div>
+      {/* ── CTA ── */}
+      <section className="bg-navy-900 py-24 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/8 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-brand-400/6 rounded-full blur-3xl" />
         </div>
-        <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+        <div className="relative z-10 max-w-3xl mx-auto text-center px-6">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-5 leading-tight">
             Ready to Find Your Perfect Car?
           </h2>
-          <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-            Join thousands of South Africans who have found their ideal vehicle through Drive Agency. Free, fast, and stress-free.
+          <p className="text-gray-400 text-[17px] leading-relaxed mb-10 max-w-xl mx-auto">
+            Join thousands of South Africans who found their ideal vehicle through Drive Agency. Free, fast, and stress-free.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-wrap justify-center gap-3">
             <Link
               to="/buyers"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 text-white font-bold rounded-full hover:bg-brand-600 transition-colors"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors shadow-lg shadow-brand-900/40"
             >
-              Get Started Today <ArrowRight size={20} />
+              Get Started Today <ArrowRight size={17} />
             </Link>
             <Link
               to="/become-agent"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 transition-colors"
+              className="inline-flex items-center gap-2 px-8 py-3.5 text-white font-semibold rounded-lg border border-white/20 hover:bg-white/8 transition-colors"
             >
               Join as Agent
             </Link>
           </div>
         </div>
       </section>
+
     </div>
   );
 };
