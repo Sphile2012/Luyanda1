@@ -87,43 +87,13 @@ const Home = () => {
 
       {/* ── Hero ── */}
       <section
-        className="relative min-h-screen flex items-center justify-center"
+        className="relative min-h-screen"
         style={{
           backgroundImage: `url(${heroBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
-      >
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-          <p className="text-brand-400 uppercase text-sm font-semibold tracking-widest mb-6">
-            South Africa's Car Matchmaking Service
-          </p>
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold text-white mb-4 leading-none">
-            We find the deal.
-          </h1>
-          <p className="text-5xl sm:text-6xl lg:text-7xl font-bold text-brand-400 mb-8 leading-none">
-            You drive the car.
-          </p>
-          <p className="text-lg sm:text-xl text-gray-200 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/buyers"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-all duration-200 hover:shadow-lg"
-            >
-              Find My Car <ArrowRight size={20} />
-            </Link>
-            <Link
-              to="/dealerships"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-black/40 backdrop-blur-sm text-white font-semibold rounded-full border border-white/40 hover:bg-black/60 transition-all duration-200"
-            >
-              Partner With Us
-            </Link>
-          </div>
-        </div>
-      </section>
+      />
 
       {/* ── Stats bar ── */}
       <section ref={statsRef} className="bg-[#0d1118] border-t border-white/5">
