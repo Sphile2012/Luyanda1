@@ -1,20 +1,43 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Car, Eye, EyeOff, LogIn, User, Shield } from 'lucide-react';
+import { Car, Eye, EyeOff, LogIn, UserPlus, Shield, User } from 'lucide-react';
+
+type LoginTab = 'agent' | 'management';
+type AuthMode = 'signin' | 'signup';
 
 const PortalEntry = () => {
-  const [activeTab, setActiveTab] = useState<'agent' | 'management'>('agent');
+  const [loginTab, setLoginTab] = useState<LoginTab>('agent');
+  const [authMode, setAuthMode] = useState<AuthMode>('signin');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const resetFields = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setFullName('');
+    setError(null);
+    setSuccess(null);
+  };
+
+  const switchMode = (mode: AuthMode) => {
+    setAuthMode(mode);
+    resetFields();
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -28,68 +51,131 @@ const PortalEntry = () => {
     }
 
     setLoading(false);
+    navigate(loginTab === 'management' ? '/management-dashboard' : '/agent-dashboard');
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await signUp(email, password, fullName.trim());
+
+    if (error) {
+      setError(error.message ?? 'Registration failed. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    setSuccess('Account created! Your application is pending review. You will be notified once approved.');
+    resetFields();
+    setAuthMode('signin');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Car className="w-10 h-10 text-brand-500" />
-              <span className="text-2xl font-bold text-navy-500">Drive Agency</span>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center">
+              <Car className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Staff Portal</h1>
-            <p className="text-gray-600 mt-1">Sign in to access your dashboard</p>
+            <span className="text-2xl font-bold text-navy-500">Drive Agency</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Staff Portal</h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            {authMode === 'signin' ? 'Sign in to access your dashboard' : 'Create your agent account'}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Auth mode tabs */}
+          <div className="flex border-b border-gray-100">
+            <button
+              onClick={() => switchMode('signin')}
+              className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors ${
+                authMode === 'signin' ? 'bg-brand-500 text-white' : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </button>
+            <button
+              onClick={() => switchMode('signup')}
+              className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors ${
+                authMode === 'signup' ? 'bg-brand-500 text-white' : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <UserPlus className="w-4 h-4" />
+              Sign Up
+            </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="flex border-b">
-              <button
-                onClick={() => setActiveTab('agent')}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 font-medium transition-colors ${
-                  activeTab === 'agent'
-                    ? 'bg-brand-500 text-white'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <User className="w-5 h-5" />
-                Agent Login
-              </button>
-              <button
-                onClick={() => setActiveTab('management')}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 font-medium transition-colors ${
-                  activeTab === 'management'
-                    ? 'bg-brand-500 text-white'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Shield className="w-5 h-5" />
-                Management Login
-              </button>
-            </div>
-
-            <div className="p-6">
-              <div className={`mb-6 p-4 rounded-lg ${
-                activeTab === 'agent' ? 'bg-brand-50' : 'bg-navy-50'
-              }`}>
-                <p className={`text-sm ${
-                  activeTab === 'agent' ? 'text-brand-700' : 'text-navy-700'
-                }`}>
-                  {activeTab === 'agent'
-                    ? 'Remote and in-office agents can access client management and deal tracking.'
-                    : 'Management can view all agent activity, manage applications, and access analytics.'}
-                </p>
+          <div className="p-6">
+            {/* Sign In: agent / management sub-tabs */}
+            {authMode === 'signin' && (
+              <div className="flex gap-2 mb-5">
+                <button
+                  onClick={() => setLoginTab('agent')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    loginTab === 'agent'
+                      ? 'bg-brand-50 text-brand-600 border border-brand-200'
+                      : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  Agent
+                </button>
+                <button
+                  onClick={() => setLoginTab('management')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    loginTab === 'management'
+                      ? 'bg-brand-50 text-brand-600 border border-brand-200'
+                      : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <Shield className="w-4 h-4" />
+                  Management
+                </button>
               </div>
+            )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Sign Up note */}
+            {authMode === 'signup' && (
+              <div className="mb-5 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
+                New agent accounts are reviewed by management before activation. You'll be notified by email.
+              </div>
+            )}
+
+            {/* Success message */}
+            {success && (
+              <div className="mb-5 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                {success}
+              </div>
+            )}
+
+            {/* SIGN IN FORM */}
+            {authMode === 'signin' && (
+              <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="label">
-                    Email Address
-                  </label>
+                  <label className="label">Email Address</label>
                   <input
                     type="email"
-                    id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="input-field"
@@ -97,15 +183,11 @@ const PortalEntry = () => {
                     required
                   />
                 </div>
-
                 <div>
-                  <label htmlFor="password" className="label">
-                    Password
-                  </label>
+                  <label className="label">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="input-field pr-10"
@@ -117,42 +199,97 @@ const PortalEntry = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
+                {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>}
+                <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
+                  {loading ? 'Signing in...' : <><LogIn className="w-4 h-4" /> Sign In</>}
+                </button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/reset-password')}
+                    className="text-sm text-brand-500 hover:text-brand-600"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+              </form>
+            )}
 
-                {error && (
-                  <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-                    {error}
+            {/* SIGN UP FORM */}
+            {authMode === 'signup' && (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div>
+                  <label className="label">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="input-field"
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="label">Email Address</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input-field"
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="label">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="input-field pr-10"
+                      placeholder="Min 8 characters"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    'Signing in...'
-                  ) : (
-                    <>
-                      <LogIn className="w-5 h-5" />
-                      Sign In
-                    </>
-                  )}
+                </div>
+                <div>
+                  <label className="label">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirm ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="input-field pr-10"
+                      placeholder="Repeat password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>}
+                <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
+                  {loading ? 'Creating account...' : <><UserPlus className="w-4 h-4" /> Create Account</>}
                 </button>
               </form>
-
-              <div className="mt-4 text-center">
-                <button
-                  onClick={() => navigate('/reset-password')}
-                  className="text-sm text-brand-500 hover:text-brand-600"
-                >
-                  Forgot your password?
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

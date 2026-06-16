@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Star, ChevronLeft, ChevronRight, TrendingUp, Shield, Zap } from 'lucide-react';
 
+const HERO_IMG = 'https://images.pexels.com/photos/3764984/pexels-photo-3764984.jpeg?auto=compress&cs=tinysrgb&w=1920';
+
 const Home = () => {
   const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
   const [testimonialIdx, setTestimonialIdx] = useState(0);
@@ -32,33 +34,6 @@ const Home = () => {
       author: "Ayanda Dlamini",
       role: "Buyer, Pretoria",
       rating: 5,
-    },
-  ];
-
-  const team = [
-    {
-      name: 'Sipho Nkosi',
-      role: 'CEO & Founder',
-      bio: '15 years in auto finance, passionate about making car ownership accessible to all South Africans.',
-      img: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-    },
-    {
-      name: 'Lerato Dube',
-      role: 'Head of Operations',
-      bio: 'Former banking professional who streamlined our agent onboarding and dealership partnership process.',
-      img: 'https://images.pexels.com/photos/3796217/pexels-photo-3796217.jpeg?auto=compress&cs=tinysrgb&w=400',
-    },
-    {
-      name: 'Ruan van der Berg',
-      role: 'Head of Sales',
-      bio: 'Built our national dealership network from scratch. Negotiates the best rates for our buyers.',
-      img: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
-    },
-    {
-      name: 'Zanele Motha',
-      role: 'Agent Success Lead',
-      bio: 'Trains and supports our growing agent network. Your first call when you join Drive Agency.',
-      img: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
     },
   ];
 
@@ -103,7 +78,7 @@ const Home = () => {
       <section
         className="relative min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: `url(https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1920)`,
+          backgroundImage: `url(${HERO_IMG})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center 40%',
         }}
@@ -236,7 +211,7 @@ const Home = () => {
             </div>
             <div className="relative">
               <img
-                src="https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=800"
+                src={HERO_IMG}
                 alt="Drive Agency"
                 className="rounded-2xl w-full object-cover h-96 lg:h-[500px]"
               />
@@ -297,35 +272,6 @@ const Home = () => {
                   {card.cta}
                   <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
                 </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <p className="text-brand-500 uppercase text-sm font-semibold tracking-widest mb-3">The People</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Meet Our Team</h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">Experienced professionals dedicated to changing how South Africans buy cars</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group">
-                <div className="h-64 overflow-hidden">
-                  <img
-                    src={member.img}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-6">
-                  <h4 className="font-bold text-gray-900 text-lg mb-1">{member.name}</h4>
-                  <p className="text-brand-500 text-sm font-medium mb-3">{member.role}</p>
-                  <p className="text-gray-500 text-sm leading-relaxed">{member.bio}</p>
-                </div>
               </div>
             ))}
           </div>
