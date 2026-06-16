@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import type { Profile, Application, Client, BuyerLead, Vehicle, ClientDocument, Dealership } from '../../lib/supabase';
-import { Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle, Circle as XCircle, Upload, Eye, Phone, Mail, MapPin, Calendar, DollarSign, ChartBar as BarChart3, ListFilter as Filter, ChevronDown, MessageSquare, Clock, Target, Award, Building, Image, CreditCard as Edit } from 'lucide-react';
+import { Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle, Upload, Eye, MapPin, DollarSign, ChartBar as BarChart3, ListFilter as Filter, Clock, Target, Award, Building, Image, Folder } from 'lucide-react';
 
-type Tab = 'overview' | 'inventory' | 'applications' | 'leads' | 'clients' | 'management' | 'reports';
+type Tab = 'overview' | 'inventory' | 'applications' | 'leads' | 'clients' | 'client_folder' | 'commission' | 'management' | 'reports';
 
 const AgentDashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -184,6 +184,8 @@ const AgentDashboard = () => {
     { id: 'applications', label: 'Applications', icon: FileText },
     { id: 'leads', label: 'Leads Management', icon: Users },
     { id: 'clients', label: 'My Clients', icon: Users },
+    { id: 'client_folder', label: 'Client Folder', icon: Folder },
+    { id: 'commission', label: 'Commission Tracker', icon: DollarSign },
   ];
 
   if (isManagement) {
@@ -829,6 +831,183 @@ const AgentDashboard = () => {
                         style={{ height: `${Math.max(10, monthClients * 20)}px` }}
                       ></div>
                       <p className="text-xs text-gray-600">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][month - 1]}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+        {activeTab === 'client_folder' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl p-5 shadow-sm">
+                <p className="text-sm text-gray-600">Total Clients</p>
+                <p className="text-3xl font-bold text-navy-900">{clients.length}</p>
+              </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm">
+                <p className="text-sm text-gray-600">Documents Uploaded</p>
+                <p className="text-3xl font-bold text-navy-900">{documents.length}</p>
+              </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm">
+                <p className="text-sm text-gray-600">Clients with Docs</p>
+                <p className="text-3xl font-bold text-navy-900">
+                  {new Set(documents.map(d => d.client_id)).size}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-navy-900">Client Documents</h3>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {clients.map((client) => {
+                  const clientDocs = documents.filter(d => d.client_id === client.id);
+                  return (
+                    <div key={client.id} className="p-4 hover:bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">
+                            {client.first_name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-navy-900">{client.first_name} {client.last_name}</p>
+                            <p className="text-sm text-gray-500">{client.phone}</p>
+                          </div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          client.status === 'approved' ? 'bg-green-100 text-green-700' :
+                          client.status === 'declined' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {client.status}
+                        </span>
+                      </div>
+                      {clientDocs.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {clientDocs.map((doc) => (
+                            <span key={doc.id} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                              <Folder className="w-3 h-3" />
+                              {doc.document_type.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-2">No documents uploaded</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'commission' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                  </div>
+                  <p className="text-sm text-gray-600">Total Earned</p>
+                </div>
+                <p className="text-3xl font-bold text-navy-900">R{stats.totalCommission.toLocaleString()}</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center">
+                    <Award className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <p className="text-sm text-gray-600">Closed Deals</p>
+                </div>
+                <p className="text-3xl font-bold text-navy-900">{stats.closedDeals}</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <p className="text-sm text-gray-600">Avg per Deal</p>
+                </div>
+                <p className="text-3xl font-bold text-navy-900">
+                  R{stats.closedDeals > 0 ? Math.round(stats.totalCommission / stats.closedDeals).toLocaleString() : 0}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-navy-900">Commission per Deal</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicle</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commission</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {clients.map((client) => (
+                      <tr key={client.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4">
+                          <p className="font-medium text-navy-900">{client.first_name} {client.last_name}</p>
+                          <p className="text-xs text-gray-500">{client.province}</p>
+                        </td>
+                        <td className="px-4 py-4 text-gray-700">
+                          {client.vehicle_brand} {client.vehicle_model}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            client.status === 'approved' ? 'bg-green-100 text-green-700' :
+                            client.status === 'declined' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {client.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className={`font-bold ${client.status === 'approved' ? 'text-green-600' : 'text-gray-400'}`}>
+                            {client.status === 'approved' ? `R${(client.commission_amount || 0).toLocaleString()}` : '—'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-500">
+                          {new Date(client.created_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-navy-900 mb-4">Monthly Commission Trend</h3>
+              <div className="flex items-end gap-3 h-40">
+                {[0, 1, 2, 3, 4, 5].map((monthOffset) => {
+                  const targetMonth = (new Date().getMonth() - (5 - monthOffset) + 12) % 12;
+                  const monthCommission = clients
+                    .filter(c => {
+                      const date = new Date(c.created_at);
+                      return date.getMonth() === targetMonth && c.status === 'approved';
+                    })
+                    .reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+
+                  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  return (
+                    <div key={monthOffset} className="flex-1 flex flex-col items-center gap-2">
+                      <p className="text-xs text-gray-500">R{(monthCommission / 1000).toFixed(0)}k</p>
+                      <div
+                        className="w-full bg-brand-500 rounded-t hover:bg-brand-600 transition-colors cursor-default"
+                        style={{ height: `${Math.max(8, Math.min(120, monthCommission / 100))}px` }}
+                      ></div>
+                      <p className="text-xs text-gray-600">{monthNames[targetMonth]}</p>
                     </div>
                   );
                 })}
