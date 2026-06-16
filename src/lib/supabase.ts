@@ -1,0 +1,127 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export type Profile = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  city: string;
+  province: string;
+  role: 'pending' | 'remote_agent' | 'inoffice_agent' | 'management' | 'admin';
+  status: 'active' | 'inactive' | 'suspended';
+  avatar_url: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Application = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  city: string;
+  province: string;
+  id_number: string;
+  motivation: string;
+  how_heard: string;
+  cv_url: string;
+  popia_consent: boolean;
+  status: 'pending' | 'approved' | 'declined';
+  decline_reason: string;
+  assigned_role: 'remote_agent' | 'inoffice_agent' | 'management' | 'admin';
+  reviewed_by: string;
+  reviewed_at: string;
+  created_at: string;
+};
+
+export type Client = {
+  id: string;
+  agent_id: string;
+  first_name: string;
+  last_name: string;
+  id_number: string;
+  phone: string;
+  email: string;
+  occupation: string;
+  province: string;
+  vehicle_condition: 'new' | 'used' | 'either';
+  vehicle_brand: string;
+  vehicle_model: string;
+  vehicle_colour: string;
+  budget_range: string;
+  finance_needed: boolean;
+  notes: string;
+  status: 'pending' | 'approved' | 'declined';
+  dealership_id: string;
+  decline_reason: string;
+  admin_notes: string;
+  commission_amount: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BuyerLead = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  car_type: string;
+  employment_status: string;
+  popia_consent: boolean;
+  status: 'new' | 'contacted' | 'qualified' | 'closed';
+  assigned_agent_id: string;
+  notes: string;
+  created_at: string;
+};
+
+export type Dealership = {
+  id: string;
+  name: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  province: string;
+  commission_rate: number;
+  is_active: boolean;
+  total_deals_sent: number;
+  total_deals_closed: number;
+  created_at: string;
+};
+
+export type Vehicle = {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  colour: string;
+  mileage: number;
+  price: number;
+  body_type: string;
+  condition: 'new' | 'used';
+  province: string;
+  dealership_id: string;
+  photos: string[];
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ClientDocument = {
+  id: string;
+  client_id: string;
+  uploaded_by: string;
+  document_type: 'id_document' | 'proof_of_income' | 'proof_of_address' | 'drivers_license' | 'bank_statement' | 'client_photo' | 'other';
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+};
