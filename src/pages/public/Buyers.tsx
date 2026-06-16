@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ArrowRight, Check, ChevronDown, ChevronUp, Car, Shield, Zap, Users } from 'lucide-react';
 
+const heroBg = new URL('../../assets/image copy.png', import.meta.url).href;
+
 type FormData = {
   first_name: string;
   last_name: string;
@@ -87,7 +89,7 @@ const Buyers = () => {
       {/* Hero */}
       <section
         className="relative py-32 bg-cover bg-center"
-        style={{ backgroundImage: 'url(https://images.pexels.com/photos/1402787/pexels-photo-1402787.jpeg?auto=compress&cs=tinysrgb&w=1920)' }}
+        style={{ backgroundImage: `url(${heroBg})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40"></div>
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
