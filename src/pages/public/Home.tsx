@@ -118,10 +118,6 @@ const Home = () => {
                 alt="Drive Agency team"
                 className="rounded-2xl w-full object-cover h-[420px] lg:h-[500px]"
               />
-              <div className="absolute -bottom-5 -left-5 bg-brand-500 rounded-xl p-5 shadow-2xl">
-                <p className="text-3xl font-extrabold text-white leading-none">350+</p>
-                <p className="text-brand-200 text-sm mt-1">Deals Closed This Year</p>
-              </div>
             </div>
 
           </div>

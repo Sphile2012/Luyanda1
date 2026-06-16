@@ -125,25 +125,6 @@ const Dealerships = () => {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 bg-gray-950">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: '50+', label: 'Partner Dealerships' },
-              { value: '350+', label: 'Deals Facilitated' },
-              { value: '68%', label: 'Average Conversion Rate' },
-              { value: '24hrs', label: 'Average Lead Delivery' },
-            ].map((stat, i) => (
-              <div key={i}>
-                <p className="text-4xl font-bold text-brand-400 mb-2">{stat.value}</p>
-                <p className="text-gray-400 font-medium">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Enquiry Form */}
       <section id="enquiry-form" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

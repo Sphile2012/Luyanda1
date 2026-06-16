@@ -125,3 +125,28 @@ export type ClientDocument = {
   created_at: string;
   updated_at: string;
 };
+
+export type Task = {
+  id: string;
+  title: string;
+  description: string;
+  assigned_to: string;
+  assigned_by: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  due_date: string;
+  completed_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Message = {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  is_broadcast: boolean;
+  subject: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+};

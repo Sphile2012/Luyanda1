@@ -162,21 +162,6 @@ const Buyers = () => {
         </div>
       </section>
 
-      {/* Car Brands */}
-      <section className="py-16 bg-gray-950 overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center">
-          <h2 className="text-2xl font-bold text-white">Brands We Work With</h2>
-        </div>
-        <div className="relative flex overflow-hidden">
-          <div className="flex gap-10 animate-scroll whitespace-nowrap">
-            {[...carBrands, ...carBrands, ...carBrands].map((brand, i) => (
-              <span key={i} className="text-sm font-semibold text-gray-400 flex-shrink-0 uppercase tracking-widest">
-                {brand}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Lead Form */}
       <section id="lead-form" className="py-20 bg-white">
