@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Shield, Zap, TrendingUp } from 'lucide-react';
-
-const heroBg = new URL('../assets/Screenshot_2026-06-16_110040.png', import.meta.url).href;
+import heroBg from '../../assets/Screenshot_2026-06-16_110040.png';
 
 const steps = [
   { step: '01', icon: Car, title: 'Tell Us What You Want', desc: 'Share your car preferences, budget, and financial situation in a few minutes.' },

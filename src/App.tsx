@@ -1,5 +1,26 @@
+import { Component, type ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-950 p-8">
+          <div className="max-w-lg text-center">
+            <h1 className="text-2xl font-bold text-white mb-3">Something went wrong</h1>
+            <pre className="text-sm text-red-400 bg-gray-900 rounded-lg p-4 text-left overflow-auto">
+              {(this.state.error as Error).message}
+            </pre>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import WhatsAppButton from './components/layout/WhatsAppButton';
@@ -28,8 +49,9 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
         <Routes>
           {/* Public Routes */}
           <Route
@@ -96,7 +118,8 @@ function App() {
           <Route path="/management-dashboard" element={<ManagementDashboard />} />
         </Routes>
       </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
