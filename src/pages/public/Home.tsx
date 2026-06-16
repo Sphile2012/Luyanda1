@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, TrendingUp, Shield, Zap } from 'lucide-react';
-import heroCar from '../../assets/Screenshot_2026-06-15_154532.png';
+const heroCar = '/image.png';
 
 const Home = () => {
   const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
@@ -76,16 +76,20 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Car image — clean, no text overlap */}
+            {/* Car image — tinted red */}
             <div className="relative flex items-center justify-center lg:justify-end">
               <div className="relative w-full max-w-xl">
                 {/* Glow behind car */}
-                <div className="absolute inset-0 bg-brand-500/10 rounded-3xl blur-2xl scale-110 pointer-events-none" />
-                <img
-                  src={heroCar}
-                  alt="Red Mercedes-Benz"
-                  className="relative z-10 w-full rounded-2xl object-cover shadow-2xl"
-                />
+                <div className="absolute inset-0 bg-red-600/20 rounded-3xl blur-2xl scale-110 pointer-events-none" />
+                {/* Image + red color blend */}
+                <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src={heroCar}
+                    alt="Red Mercedes-AMG"
+                    className="w-full object-cover block"
+                  />
+                  <div className="absolute inset-0 bg-red-600 mix-blend-color opacity-90 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>
