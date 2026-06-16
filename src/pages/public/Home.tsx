@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Shield, Zap, TrendingUp } from 'lucide-react';
 
-import heroBg from '../../assets/Screenshot_2026-06-15_154532.png';
+const heroBg = '/image copy copy.png';
 
 const stats = [
   { value: 350, label: 'Deals Closed', suffix: '+' },
