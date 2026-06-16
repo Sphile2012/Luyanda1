@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Car, Users, Building2, CheckCircle, Check, Briefcase, MapPin, DollarSign, Clock } from 'lucide-react';
+import { ArrowRight, Car, Users, Building2, CheckCircle, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import heroBg from '../../assets/Screenshot_2026-06-16_110040.png';
 
@@ -34,30 +34,6 @@ const cards = [
   },
 ];
 
-const openRoles = [
-  {
-    title: 'Remote Finance Agent',
-    type: 'Remote · Full-time',
-    earning: 'R15,000 – R50,000/mo',
-    desc: 'Work from anywhere in South Africa. Handle buyer enquiries, match clients to vehicles, and guide deals from enquiry to approval.',
-    reqs: ['SA Citizen', 'Own smartphone & laptop', 'Strong communication skills', 'Self-motivated'],
-  },
-  {
-    title: 'In-Office Finance Agent',
-    type: 'Gauteng · Full-time',
-    earning: 'R15,000 – R45,000/mo',
-    desc: 'Based in our Gauteng office. Work alongside a team, receive hands-on coaching, and close deals in a structured environment.',
-    reqs: ['SA Citizen', 'Gauteng based', 'Eager to learn', 'Team player'],
-  },
-  {
-    title: 'Senior Agent / Team Lead',
-    type: 'Hybrid · Full-time',
-    earning: 'R40,000 – R80,000/mo',
-    desc: 'Lead a team of junior agents, mentor performance, manage key dealership relationships, and drive team targets.',
-    reqs: ['2+ years finance/sales', 'Leadership experience', 'CRM proficiency', 'SA Citizen'],
-  },
-];
-
 type BuyerForm = {
   first_name: string; last_name: string; phone: string; email: string;
   car_type: string; employment_status: string; popia_consent: boolean;
@@ -72,7 +48,7 @@ type AgentForm = {
 const defaultBuyer: BuyerForm = { first_name: '', last_name: '', phone: '', email: '', car_type: '', employment_status: '', popia_consent: false };
 const defaultAgent: AgentForm = { first_name: '', last_name: '', email: '', phone: '', city: '', province: '', id_number: '', motivation: '', how_heard: '', popia_consent: false };
 
-type Tab = 'car' | 'agent' | 'careers';
+type Tab = 'car' | 'agent';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState<Tab>('car');
@@ -209,11 +185,10 @@ const Home = () => {
           </div>
 
           {/* Tabs */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 bg-gray-900 rounded-2xl p-1.5 mb-10 max-w-xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 bg-gray-900 rounded-2xl p-1.5 mb-10 max-w-md mx-auto">
             {([
               { id: 'car' as Tab, label: 'Find Me a Car', icon: Car },
               { id: 'agent' as Tab, label: 'Become an Agent', icon: Users },
-              { id: 'careers' as Tab, label: 'Careers', icon: Briefcase },
             ] as const).map(tab => (
               <button
                 key={tab.id}
@@ -404,45 +379,6 @@ const Home = () => {
             </div>
           )}
 
-          {/* ── Careers tab ── */}
-          {activeTab === 'careers' && (
-            <div className="space-y-5">
-              {openRoles.map((role, i) => (
-                <div key={i} className="bg-white rounded-2xl p-7 sm:p-8">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">{role.title}</h3>
-                      <div className="flex flex-wrap gap-3 text-sm text-gray-500">
-                        <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-brand-500" />{role.type}</span>
-                        <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5 text-brand-500" />{role.earning}</span>
-                        <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-brand-500" />Commission-based</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setActiveTab('agent')}
-                      className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white text-sm font-semibold rounded-lg hover:bg-brand-600 transition-colors"
-                    >
-                      Apply Now <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-gray-600 text-[15px] leading-relaxed mb-5">{role.desc}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {role.reqs.map((r, j) => (
-                      <span key={j} className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-50 text-brand-700 text-xs font-semibold rounded-full">
-                        <Check className="w-3 h-3" />{r}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              <p className="text-center text-gray-500 text-sm pt-2">
-                Don't see the right fit?{' '}
-                <button onClick={() => setActiveTab('agent')} className="text-brand-400 font-semibold hover:text-brand-300 underline underline-offset-2">
-                  Send a general application
-                </button>
-              </p>
-            </div>
-          )}
 
         </div>
       </section>

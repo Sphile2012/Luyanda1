@@ -6,10 +6,22 @@ import type { Profile, Application, Client, BuyerLead, Vehicle, ClientDocument, 
 import {
   Car, Users, FileText, TrendingUp, LogOut, Search, Eye, CircleCheck as CheckCircle,
   Upload, ChartBar as BarChart3, Download, Trash2, Image, DollarSign, UserCheck, UserX,
-  ClipboardList, MessageSquare, Send, Plus, X, AlertCircle, Clock, CheckSquare,
+  ClipboardList, MessageSquare, Send, Plus, X, AlertCircle, Clock, CheckSquare, Briefcase,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'tasks' | 'messages' | 'agents' | 'applications' | 'clients' | 'inventory' | 'reports' | 'photos';
+type Tab = 'overview' | 'tasks' | 'messages' | 'agents' | 'applications' | 'clients' | 'inventory' | 'reports' | 'photos' | 'job_postings';
+
+type JobPosting = {
+  id: string;
+  title: string;
+  type: string;
+  location: string;
+  salary_range: string;
+  description: string;
+  requirements: string;
+  is_active: boolean;
+  created_at: string;
+};
 
 const priorityColors: Record<string, string> = {
   low: 'bg-gray-100 text-gray-700',
@@ -56,6 +68,12 @@ const ManagementDashboard = () => {
   const [sendingMsg, setSendingMsg] = useState(false);
   const [selectedMsg, setSelectedMsg] = useState<Message | null>(null);
 
+  // Job postings state
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [submittingJob, setSubmittingJob] = useState(false);
+  const [newJob, setNewJob] = useState({ title: '', type: 'remote', location: '', salary_range: '', description: '', requirements: '' });
+
   useEffect(() => {
     if (!user || !profile) { navigate('/portal'); return; }
     if (!['management', 'admin'].includes(profile.role)) { navigate('/portal'); return; }
@@ -72,6 +90,7 @@ const ManagementDashboard = () => {
       { data: documentsData },
       { data: tasksData },
       { data: messagesData },
+      { data: jobsData },
     ] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at', { ascending: true }),
       supabase.from('applications').select('*').order('created_at', { ascending: false }),
@@ -80,6 +99,7 @@ const ManagementDashboard = () => {
       supabase.from('client_documents').select('*').order('created_at', { ascending: false }),
       supabase.from('tasks').select('*').order('created_at', { ascending: false }),
       supabase.from('messages').select('*').order('created_at', { ascending: false }),
+      supabase.from('job_postings').select('*').order('created_at', { ascending: false }),
     ]);
 
     if (agentsData) setAgents(agentsData as Profile[]);
@@ -89,6 +109,7 @@ const ManagementDashboard = () => {
     if (documentsData) setDocuments(documentsData as ClientDocument[]);
     if (tasksData) setTasks(tasksData as Task[]);
     if (messagesData) setMessages(messagesData as Message[]);
+    if (jobsData) setJobPostings(jobsData as JobPosting[]);
     setLoading(false);
   };
 
@@ -192,6 +213,32 @@ const ManagementDashboard = () => {
     if (!error) setMessages(messages.map(m => m.id === msgId ? { ...m, is_read: true } : m));
   };
 
+  const createJobPosting = async () => {
+    if (!newJob.title || !newJob.location || !newJob.description || !newJob.requirements || !newJob.salary_range) return;
+    setSubmittingJob(true);
+    const { data, error } = await supabase.from('job_postings').insert({
+      ...newJob,
+      created_by: user?.id,
+    }).select().single();
+    if (!error && data) {
+      setJobPostings([data as JobPosting, ...jobPostings]);
+      setNewJob({ title: '', type: 'remote', location: '', salary_range: '', description: '', requirements: '' });
+      setShowJobForm(false);
+    }
+    setSubmittingJob(false);
+  };
+
+  const toggleJobPosting = async (jobId: string, is_active: boolean) => {
+    const { error } = await supabase.from('job_postings').update({ is_active, updated_at: new Date().toISOString() }).eq('id', jobId);
+    if (!error) setJobPostings(jobPostings.map(j => j.id === jobId ? { ...j, is_active } : j));
+  };
+
+  const deleteJobPosting = async (jobId: string) => {
+    if (!confirm('Delete this job posting?')) return;
+    const { error } = await supabase.from('job_postings').delete().eq('id', jobId);
+    if (!error) setJobPostings(jobPostings.filter(j => j.id !== jobId));
+  };
+
   const getStats = () => {
     const activeAgents = agents.filter(a => a.status === 'active').length;
     const totalDeals = clients.filter(c => c.status === 'approved').length;
@@ -237,6 +284,7 @@ const ManagementDashboard = () => {
     { id: 'inventory', label: 'Inventory', icon: Car },
     { id: 'reports', label: 'Reports', icon: TrendingUp },
     { id: 'photos', label: 'Photo Manager', icon: Image },
+    { id: 'job_postings', label: 'Job Postings', icon: Briefcase },
   ];
 
   const agentList = agents.filter(a => ['remote_agent', 'inoffice_agent', 'management'].includes(a.role));
@@ -925,6 +973,80 @@ const ManagementDashboard = () => {
           </div>
         )}
 
+        {/* ── Job Postings ── */}
+        {activeTab === 'job_postings' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">Job Postings</h2>
+                <p className="text-gray-500 text-sm mt-0.5">Manage open positions at Drive Agency</p>
+              </div>
+              <button
+                onClick={() => setShowJobForm(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Post a Job
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Total Postings', value: jobPostings.length, color: 'text-navy-900' },
+                { label: 'Active', value: jobPostings.filter(j => j.is_active).length, color: 'text-green-600' },
+                { label: 'Inactive', value: jobPostings.filter(j => !j.is_active).length, color: 'text-gray-500' },
+              ].map((s, i) => (
+                <div key={i} className="bg-white rounded-xl p-5 shadow-sm text-center">
+                  <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              {jobPostings.length === 0 && (
+                <div className="bg-white rounded-xl p-12 shadow-sm text-center text-gray-400">
+                  <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No job postings yet</p>
+                  <p className="text-sm mt-1">Click "Post a Job" to add your first opening.</p>
+                </div>
+              )}
+              {jobPostings.map((job) => (
+                <div key={job.id} className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1 flex-wrap">
+                        <h3 className="text-lg font-bold text-navy-900">{job.title}</h3>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${job.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {job.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-500 mb-3">
+                        <span className="capitalize">{job.type.replace('_', '-')}</span>
+                        <span>·</span>
+                        <span>{job.location}</span>
+                        <span>·</span>
+                        <span>{job.salary_range}</span>
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{job.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => toggleJobPosting(job.id, !job.is_active)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${job.is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                      >
+                        {job.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button onClick={() => deleteJobPosting(job.id)} className="p-2 rounded-lg hover:bg-red-100 text-red-500 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Eye icon for applications ── */}
         {false && <Eye />}
       </main>
@@ -974,6 +1096,61 @@ const ManagementDashboard = () => {
                   {submittingTask ? 'Creating...' : 'Create Task'}
                 </button>
                 <button onClick={() => setShowCreateTask(false)} className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Post Job Modal ── */}
+      {showJobForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-navy-900">Post a New Job</h3>
+              <button onClick={() => setShowJobForm(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="label">Job Title <span className="text-red-500">*</span></label>
+                <input type="text" value={newJob.title} onChange={(e) => setNewJob({ ...newJob, title: e.target.value })} className="input-field" placeholder="e.g. Remote Finance Agent" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Type <span className="text-red-500">*</span></label>
+                  <select value={newJob.type} onChange={(e) => setNewJob({ ...newJob, type: e.target.value })} className="input-field">
+                    <option value="remote">Remote</option>
+                    <option value="in_office">In-Office</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Location <span className="text-red-500">*</span></label>
+                  <input type="text" value={newJob.location} onChange={(e) => setNewJob({ ...newJob, location: e.target.value })} className="input-field" placeholder="e.g. Gauteng" />
+                </div>
+              </div>
+              <div>
+                <label className="label">Salary Range <span className="text-red-500">*</span></label>
+                <input type="text" value={newJob.salary_range} onChange={(e) => setNewJob({ ...newJob, salary_range: e.target.value })} className="input-field" placeholder="e.g. R15,000 – R50,000/mo" />
+              </div>
+              <div>
+                <label className="label">Job Description <span className="text-red-500">*</span></label>
+                <textarea value={newJob.description} onChange={(e) => setNewJob({ ...newJob, description: e.target.value })} className="input-field min-h-[90px]" placeholder="Describe the role and responsibilities..." />
+              </div>
+              <div>
+                <label className="label">Requirements <span className="text-red-500">*</span></label>
+                <textarea value={newJob.requirements} onChange={(e) => setNewJob({ ...newJob, requirements: e.target.value })} className="input-field min-h-[80px]" placeholder="List requirements, one per line..." />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={createJobPosting}
+                  disabled={submittingJob || !newJob.title || !newJob.location || !newJob.description || !newJob.requirements || !newJob.salary_range}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 disabled:opacity-50 transition-colors"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  {submittingJob ? 'Posting...' : 'Post Job'}
+                </button>
+                <button onClick={() => setShowJobForm(false)} className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
               </div>
             </div>
           </div>
