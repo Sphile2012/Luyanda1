@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, TrendingUp, Shield, Zap } from 'lucide-react';
 import heroCar from '../../assets/Screenshot_2026-06-15_154532.png';
 
-const HERO_IMG = heroCar;
-
 const Home = () => {
   const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
   const statsRef = useRef<HTMLDivElement>(null);
@@ -41,41 +39,55 @@ const Home = () => {
   return (
     <div className="w-full">
       {/* Hero */}
-      <section
-        className="relative min-h-screen flex items-center justify-center"
-        style={{
-          backgroundImage: `url(${HERO_IMG})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 40%',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/65 to-black/75"></div>
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-          <p className="text-brand-400 uppercase text-sm font-semibold tracking-widest mb-6">
-            South Africa's Car Matchmaking Service
-          </p>
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold text-white mb-4 leading-none">
-            We find the deal.
-          </h1>
-          <p className="text-5xl sm:text-6xl lg:text-7xl font-bold text-brand-400 mb-8 leading-none">
-            You drive the car.
-          </p>
-          <p className="text-lg sm:text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/buyers"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-all duration-200 hover:shadow-lg"
-            >
-              Find My Car <ArrowRight size={20} />
-            </Link>
-            <Link
-              to="/dealerships"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full border border-white/30 hover:bg-white/20 transition-all duration-200"
-            >
-              Partner With Us
-            </Link>
+      <section className="relative min-h-screen bg-gray-950 flex items-center overflow-hidden">
+        {/* Background subtle gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
+        <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-brand-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-24 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-screen lg:min-h-0 lg:py-28">
+            {/* Text */}
+            <div>
+              <p className="text-brand-400 uppercase text-xs font-bold tracking-[0.2em] mb-6">
+                South Africa's Car Matchmaking Service
+              </p>
+              <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black text-white mb-3 leading-[1.05]">
+                We find<br />the deal.
+              </h1>
+              <p className="text-5xl sm:text-6xl xl:text-7xl font-black text-brand-400 mb-8 leading-[1.05]">
+                You drive<br />the car.
+              </p>
+              <p className="text-lg text-gray-400 mb-10 max-w-lg leading-relaxed">
+                Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  to="/buyers"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25"
+                >
+                  Find My Car <ArrowRight size={20} />
+                </Link>
+                <Link
+                  to="/dealerships"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/8 backdrop-blur-sm text-white font-semibold rounded-full border border-white/20 hover:bg-white/15 transition-all duration-200"
+                >
+                  Partner With Us
+                </Link>
+              </div>
+            </div>
+
+            {/* Car image — clean, no text overlap */}
+            <div className="relative flex items-center justify-center lg:justify-end">
+              <div className="relative w-full max-w-xl">
+                {/* Glow behind car */}
+                <div className="absolute inset-0 bg-brand-500/10 rounded-3xl blur-2xl scale-110 pointer-events-none" />
+                <img
+                  src={heroCar}
+                  alt="Red Mercedes-Benz"
+                  className="relative z-10 w-full rounded-2xl object-cover shadow-2xl"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -177,7 +189,7 @@ const Home = () => {
             </div>
             <div className="relative">
               <img
-                src={HERO_IMG}
+                src="https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800"
                 alt="Drive Agency"
                 className="rounded-2xl w-full object-cover h-96 lg:h-[500px]"
               />
