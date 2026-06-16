@@ -78,7 +78,7 @@ const Footer = () => {
 
           <div>
             <h4 className="font-semibold mb-4">Connect</h4>
-            <div className="flex gap-4 mb-4">
+            <div className="flex gap-4">
               <a
                 href="https://facebook.com"
                 target="_blank"
@@ -89,9 +89,6 @@ const Footer = () => {
                 <Share2 className="w-5 h-5" />
               </a>
             </div>
-            <p className="text-gray-400 text-sm">
-              Contact: info@driveagency.co.za
-            </p>
           </div>
         </div>
 

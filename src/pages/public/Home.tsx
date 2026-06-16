@@ -1,41 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Car, Users, Building2, CheckCircle, Star, ChevronLeft, ChevronRight, TrendingUp, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Car, Users, Building2, CheckCircle, TrendingUp, Shield, Zap } from 'lucide-react';
 
 const HERO_IMG = 'https://images.pexels.com/photos/3764984/pexels-photo-3764984.jpeg?auto=compress&cs=tinysrgb&w=1920';
 
 const Home = () => {
   const [displayedStats, setDisplayedStats] = useState({ deals: 0, dealerships: 0, agents: 0, buyers: 0 });
-  const [testimonialIdx, setTestimonialIdx] = useState(0);
   const statsRef = useRef<HTMLDivElement>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
-
-  const testimonials = [
-    {
-      text: "Drive Agency found me the perfect car at a rate I could actually afford. The process was completely seamless from start to finish.",
-      author: "Thabo Mokoena",
-      role: "Buyer, Johannesburg",
-      rating: 5,
-    },
-    {
-      text: "As a dealership, this platform has given us access to serious buyers. The quality of leads is exceptional and conversion is high.",
-      author: "Naledi Sithole",
-      role: "Sales Manager, Cape Town",
-      rating: 5,
-    },
-    {
-      text: "Working as an agent with Drive Agency has been incredibly rewarding. The commission structure and support are fantastic.",
-      author: "James Kruger",
-      role: "Agent, Durban",
-      rating: 5,
-    },
-    {
-      text: "I never thought buying a car could be this easy. My agent handled everything and I just drove away in my dream car!",
-      author: "Ayanda Dlamini",
-      role: "Buyer, Pretoria",
-      rating: 5,
-    },
-  ];
 
   const carBrands = ['Toyota', 'Volkswagen', 'Ford', 'BMW', 'Mercedes-Benz', 'Hyundai', 'Kia', 'Nissan', 'Audi', 'Honda', 'Mazda', 'Isuzu', 'Haval', 'Suzuki', 'Chevrolet', 'Jeep'];
 
@@ -64,13 +36,6 @@ const Home = () => {
     if (statsRef.current) observer.observe(statsRef.current);
     return () => observer.disconnect();
   }, [hasAnimated]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTestimonialIdx((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [testimonials.length]);
 
   return (
     <div className="w-full">
@@ -274,55 +239,6 @@ const Home = () => {
                 </Link>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <p className="text-brand-500 uppercase text-sm font-semibold tracking-widest mb-3">Reviews</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">What Our Clients Say</h2>
-          </div>
-
-          <div className="bg-gray-50 rounded-3xl p-10 md:p-14 text-center">
-            <div className="flex justify-center gap-1 mb-6">
-              {Array.from({ length: testimonials[testimonialIdx].rating }).map((_, i) => (
-                <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-              ))}
-            </div>
-            <p className="text-xl md:text-2xl text-gray-700 leading-relaxed mb-8 italic">
-              "{testimonials[testimonialIdx].text}"
-            </p>
-            <p className="font-bold text-gray-900 text-lg">{testimonials[testimonialIdx].author}</p>
-            <p className="text-gray-500">{testimonials[testimonialIdx].role}</p>
-          </div>
-
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <button
-              onClick={() => setTestimonialIdx((p) => (p - 1 + testimonials.length) % testimonials.length)}
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex gap-2">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setTestimonialIdx(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    i === testimonialIdx ? 'bg-brand-500 w-8' : 'bg-gray-300 w-2'
-                  }`}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => setTestimonialIdx((p) => (p + 1) % testimonials.length)}
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </section>

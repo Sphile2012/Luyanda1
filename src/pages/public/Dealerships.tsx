@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { ArrowRight, Check, TrendingUp, Users, Zap, Star } from 'lucide-react';
+import { ArrowRight, Check, TrendingUp, Users, Zap } from 'lucide-react';
 
 type FormData = {
   dealership_name: string;
@@ -15,27 +15,6 @@ type FormData = {
   message: string;
   popia_consent: boolean;
 };
-
-const testimonials = [
-  {
-    text: "Since partnering with Drive Agency, our monthly sales have increased by 40%. The leads are serious buyers ready to purchase.",
-    author: "Deon Pretorius",
-    role: "GM, Pretorius Motors — Johannesburg",
-    rating: 5,
-  },
-  {
-    text: "The quality of buyers coming through Drive Agency is exceptional. Less time wasted, more deals closed. Highly recommend.",
-    author: "Naledi Sithole",
-    role: "Sales Manager, Cape Motors — Cape Town",
-    rating: 5,
-  },
-  {
-    text: "Onboarding was simple and we started receiving quality leads within a week. Drive Agency is a game changer for our dealership.",
-    author: "Kobus van Zyl",
-    role: "Owner, Van Zyl Autos — Durban",
-    rating: 5,
-  },
-];
 
 const Dealerships = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -54,7 +33,6 @@ const Dealerships = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -290,36 +268,6 @@ const Dealerships = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-brand-500 uppercase text-sm font-semibold tracking-widest mb-3">Partner Stories</p>
-            <h2 className="text-4xl font-bold text-gray-900">What Our Partners Say</h2>
-          </div>
-          <div className="bg-white rounded-3xl p-10 text-center shadow-sm">
-            <div className="flex justify-center gap-1 mb-5">
-              {Array.from({ length: testimonials[activeTestimonial].rating }).map((_, i) => (
-                <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-              ))}
-            </div>
-            <p className="text-xl text-gray-700 italic leading-relaxed mb-6">
-              "{testimonials[activeTestimonial].text}"
-            </p>
-            <p className="font-bold text-gray-900">{testimonials[activeTestimonial].author}</p>
-            <p className="text-gray-500 text-sm">{testimonials[activeTestimonial].role}</p>
-          </div>
-          <div className="flex justify-center gap-2 mt-6">
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTestimonial(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${i === activeTestimonial ? 'bg-brand-500 w-8' : 'bg-gray-300 w-2'}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { ArrowRight, Check, DollarSign, Clock, MapPin, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { ArrowRight, Check, DollarSign, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 
 type FormData = {
   first_name: string;
@@ -24,27 +24,6 @@ const faqs = [
   { q: 'Is there a contract or minimum commitment?', a: 'Standard contracts are 6-month minimum. We prefer agents who are serious about building a career with us.' },
 ];
 
-const testimonials = [
-  {
-    text: "Becoming a Drive Agent changed my life. I earn more than I ever did in my 9-to-5 and I work on my own schedule.",
-    author: "Sipho Dlamini",
-    role: "Remote Agent, Gauteng",
-    rating: 5,
-  },
-  {
-    text: "The training was thorough and the team support is incredible. I closed my first deal in week two. Drive Agency is amazing.",
-    author: "Chantelle Nel",
-    role: "In-Office Agent, Cape Town",
-    rating: 5,
-  },
-  {
-    text: "I was skeptical at first but after 3 months as an agent, I was earning more than I expected. Highly recommend applying.",
-    author: "Bongani Khumalo",
-    role: "Remote Agent, KwaZulu-Natal",
-    rating: 5,
-  },
-];
-
 const BecomeAgent = () => {
   const [formData, setFormData] = useState<FormData>({
     first_name: '',
@@ -62,7 +41,6 @@ const BecomeAgent = () => {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -152,55 +130,6 @@ const BecomeAgent = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Earnings */}
-      <section className="py-20 bg-gray-950">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-brand-400 uppercase text-sm font-semibold tracking-widest mb-3">Earning Potential</p>
-            <h2 className="text-4xl font-bold text-white mb-4">How Much Can You Earn?</h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">Commission-based with no cap. Here's what our agents typically earn:</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                tier: 'Entry Level',
-                range: 'R5,000 – R12,000',
-                desc: 'Starting agents closing 1–3 deals per month while building their client base.',
-                deals: '1–3 deals / month',
-                color: 'bg-gray-800 border-gray-700',
-              },
-              {
-                tier: 'Growing Agent',
-                range: 'R12,000 – R25,000',
-                desc: 'Agents with momentum, building referrals and closing consistently.',
-                deals: '4–8 deals / month',
-                color: 'bg-brand-600 border-brand-500',
-                featured: true,
-              },
-              {
-                tier: 'Top Performer',
-                range: 'R25,000 – R50,000+',
-                desc: 'High performers with a strong pipeline and repeat clients.',
-                deals: '10+ deals / month',
-                color: 'bg-gray-800 border-gray-700',
-              },
-            ].map((tier, i) => (
-              <div key={i} className={`${tier.color} border rounded-2xl p-8 ${tier.featured ? 'scale-105 shadow-xl shadow-brand-500/20' : ''}`}>
-                {tier.featured && <div className="text-xs font-bold text-brand-200 uppercase tracking-widest mb-2">Most Common</div>}
-                <h3 className="text-lg font-bold text-white mb-2">{tier.tier}</h3>
-                <p className="text-3xl font-bold text-brand-400 mb-3">{tier.range}</p>
-                <p className="text-gray-300 text-sm mb-4 leading-relaxed">{tier.desc}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <Check className="w-4 h-4 text-brand-400" />
-                  {tier.deals}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-gray-500 text-sm mt-6">* Earnings vary based on performance, region, and deal value. These are estimates only.</p>
         </div>
       </section>
 
@@ -361,36 +290,6 @@ const BecomeAgent = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-brand-500 uppercase text-sm font-semibold tracking-widest mb-3">Agent Stories</p>
-            <h2 className="text-4xl font-bold text-gray-900">Hear From Our Agents</h2>
-          </div>
-          <div className="bg-gray-50 rounded-3xl p-10 text-center">
-            <div className="flex justify-center gap-1 mb-5">
-              {Array.from({ length: testimonials[activeTestimonial].rating }).map((_, i) => (
-                <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-              ))}
-            </div>
-            <p className="text-xl text-gray-700 italic leading-relaxed mb-6">
-              "{testimonials[activeTestimonial].text}"
-            </p>
-            <p className="font-bold text-gray-900">{testimonials[activeTestimonial].author}</p>
-            <p className="text-gray-500 text-sm">{testimonials[activeTestimonial].role}</p>
-          </div>
-          <div className="flex justify-center gap-2 mt-6">
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTestimonial(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${i === activeTestimonial ? 'bg-brand-500 w-8' : 'bg-gray-300 w-2'}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
