@@ -19,7 +19,7 @@ const priorityColors: Record<string, string> = {
 };
 
 const AgentDashboard = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
@@ -48,10 +48,11 @@ const AgentDashboard = () => {
   const isManagement = profile?.role === 'management' || profile?.role === 'admin';
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || !profile) { navigate('/portal'); return; }
     if (!['remote_agent', 'inoffice_agent', 'management', 'admin'].includes(profile.role)) { navigate('/portal'); return; }
     fetchData();
-  }, [user, profile, navigate]);
+  }, [user, profile, authLoading, navigate]);
 
   const fetchData = async () => {
     setLoading(true);

@@ -38,7 +38,7 @@ const statusColors: Record<string, string> = {
 };
 
 const ManagementDashboard = () => {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
@@ -75,10 +75,11 @@ const ManagementDashboard = () => {
   const [newJob, setNewJob] = useState({ title: '', type: 'remote', location: '', salary_range: '', description: '', requirements: '' });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || !profile) { navigate('/portal'); return; }
     if (!['management', 'admin'].includes(profile.role)) { navigate('/portal'); return; }
     fetchData();
-  }, [user, profile, navigate]);
+  }, [user, profile, authLoading, navigate]);
 
   const fetchData = async () => {
     setLoading(true);

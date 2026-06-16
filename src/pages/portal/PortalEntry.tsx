@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Car, Eye, EyeOff, LogIn, UserPlus, Shield, User } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { Eye, EyeOff, LogIn, UserPlus, Shield, User } from 'lucide-react';
 
 type LoginTab = 'agent' | 'management';
 type AuthMode = 'signin' | 'signup';
@@ -20,7 +21,7 @@ const PortalEntry = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const resetFields = () => {
@@ -42,16 +43,33 @@ const PortalEntry = () => {
     setError(null);
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    // Sign in directly so we can read the user id immediately
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
+    if (authError || !data.user) {
       setError('Invalid email or password. Please try again.');
       setLoading(false);
       return;
     }
 
+    // Fetch the real role from the profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
     setLoading(false);
-    navigate(loginTab === 'management' ? '/management-dashboard' : '/agent-dashboard');
+
+    if (profile?.role === 'management' || profile?.role === 'admin') {
+      navigate('/management-dashboard');
+    } else if (profile?.role === 'remote_agent' || profile?.role === 'inoffice_agent') {
+      navigate('/agent-dashboard');
+    } else {
+      // Role is 'pending' or missing — account not yet approved
+      await supabase.auth.signOut();
+      setError('Your account is pending approval by management. You will be notified once activated.');
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -91,11 +109,13 @@ const PortalEntry = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center">
-              <Car className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-navy-500">Drive Agency</span>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <img
+              src="/image.png"
+              alt="Drive Agency"
+              className="h-14 w-14 rounded-2xl object-cover shadow-md"
+            />
+            <span className="text-2xl font-bold text-navy-500 tracking-tight">Drive Agency</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Staff Portal</h1>
           <p className="text-gray-500 mt-1 text-sm">
@@ -205,7 +225,7 @@ const PortalEntry = () => {
                 </div>
                 {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>}
                 <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
-                  {loading ? 'Signing in...' : <><LogIn className="w-4 h-4" /> Sign In</>}
+                  {loading ? 'Signing in…' : <><LogIn className="w-4 h-4" /> Sign In</>}
                 </button>
                 <div className="text-center">
                   <button
@@ -286,7 +306,7 @@ const PortalEntry = () => {
                 </div>
                 {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>}
                 <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
-                  {loading ? 'Creating account...' : <><UserPlus className="w-4 h-4" /> Create Account</>}
+                  {loading ? 'Creating account…' : <><UserPlus className="w-4 h-4" /> Create Account</>}
                 </button>
               </form>
             )}
