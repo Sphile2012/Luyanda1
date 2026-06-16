@@ -28,6 +28,7 @@ import Home from './pages/public/Home';
 import Buyers from './pages/public/Buyers';
 import Dealerships from './pages/public/Dealerships';
 import BecomeAgent from './pages/public/BecomeAgent';
+import About from './pages/public/About';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import Terms from './pages/legal/Terms';
 import Popia from './pages/legal/Popia';
@@ -59,6 +60,14 @@ function App() {
             element={
               <PublicLayout>
                 <Home />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <PublicLayout>
+                <About />
               </PublicLayout>
             }
           />

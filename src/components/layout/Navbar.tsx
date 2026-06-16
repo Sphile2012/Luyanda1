@@ -25,6 +25,7 @@ const Navbar = () => {
     { path: '/', label: 'Home' },
     { path: '/buyers', label: 'Buyers' },
     { path: '/dealerships', label: 'Dealerships' },
+    { path: '/about', label: 'About Us' },
     { path: '/become-agent', label: 'Become an Agent' },
   ];
 

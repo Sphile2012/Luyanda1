@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ArrowRight, Check, ChevronDown, ChevronUp, Car, Shield, Zap, Users } from 'lucide-react';
 
-const heroBg = new URL('../../assets/image copy.png', import.meta.url).href;
+const heroBg = new URL('../../assets/Screenshot_2026-06-16_104822.png', import.meta.url).href;
 
 type FormData = {
   first_name: string;
