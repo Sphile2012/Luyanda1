@@ -43,7 +43,6 @@ const PortalEntry = () => {
     setError(null);
     setLoading(true);
 
-    // Sign in directly so we can read the user id immediately
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError || !data.user) {
@@ -52,21 +51,33 @@ const PortalEntry = () => {
       return;
     }
 
-    // Fetch the real role from the profiles table
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
+    // Fetch role — retry once in case of brief timing delay
+    const fetchRole = async () => {
+      const { data: p, error: pErr } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .maybeSingle();
+      return { role: p?.role ?? null, error: pErr };
+    };
+
+    let { role, error: profileError } = await fetchRole();
+
+    if (!role && !profileError) {
+      // Profile not ready yet — wait briefly and retry
+      await new Promise(res => setTimeout(res, 1200));
+      ({ role, error: profileError } = await fetchRole());
+    }
 
     setLoading(false);
 
-    if (profile?.role === 'management' || profile?.role === 'admin') {
+    if (role === 'management' || role === 'admin') {
       navigate('/management-dashboard');
-    } else if (profile?.role === 'remote_agent' || profile?.role === 'inoffice_agent') {
+    } else if (role === 'remote_agent' || role === 'inoffice_agent') {
       navigate('/agent-dashboard');
+    } else if (profileError) {
+      setError(`Sign-in error: ${profileError.message}`);
     } else {
-      // Role is 'pending' or missing — account not yet approved
       await supabase.auth.signOut();
       setError('Your account is pending approval by management. You will be notified once activated.');
     }
