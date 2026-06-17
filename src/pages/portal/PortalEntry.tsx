@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Eye, EyeOff, LogIn, UserPlus, Shield, User } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UserPlus, Shield, User, LogOut } from 'lucide-react';
 
 type LoginTab = 'agent' | 'management';
 type AuthMode = 'signin' | 'signup';
@@ -21,8 +21,19 @@ const PortalEntry = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { signUp } = useAuth();
+  const { user, profile, loading: authLoading, signUp, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect already-authenticated users to their dashboard
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user || !profile) return;
+    if (profile.role === 'management' || profile.role === 'admin') {
+      navigate('/management-dashboard', { replace: true });
+    } else if (profile.role === 'remote_agent' || profile.role === 'inoffice_agent') {
+      navigate('/agent-dashboard', { replace: true });
+    }
+  }, [user, profile, authLoading, navigate]);
 
   const resetFields = () => {
     setEmail('');
@@ -154,6 +165,22 @@ const PortalEntry = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Already signed in but pending — show sign out option */}
+        {user && profile?.role === 'pending' && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-yellow-800">Signed in as {profile.full_name}</p>
+              <p className="text-xs text-yellow-600">Account pending approval by management.</p>
+            </div>
+            <button
+              onClick={async () => { await signOut(); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium rounded-lg transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </div>
+        )}
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
