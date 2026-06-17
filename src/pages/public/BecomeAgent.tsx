@@ -17,9 +17,10 @@ type FormData = {
 const faqs = [
   { q: 'Do I need car sales experience?', a: 'No experience is required. We provide full training on our process, tools, and how to present vehicles to buyers. Drive experience helps but is not mandatory.' },
   { q: 'How much can I earn?', a: 'Your earnings depend on how many deals you close. Top agents earn between R20,000 to R50,000+ per month. Commission is paid on every approved deal.' },
+  { q: 'Is training paid?', a: 'Training is provided at no cost to you. We invest in getting you ready to close deals — there is no charge during onboarding or the training period.' },
   { q: 'Can I work remotely?', a: 'Yes. Drive Agency offers both remote and in-office agent positions. Remote agents work from home and handle clients digitally.' },
   { q: 'What support do I get?', a: 'You receive full onboarding training, access to our CRM system, marketing materials, and ongoing support from your team lead.' },
-  { q: 'How long does the interview process take?', a: 'Typically 1–2 weeks from application to offer, including a phone interview, skills assessment, and final interview.' },
+  { q: 'How long does the interview process take?', a: 'Typically 1 to 2 weeks from application to offer, including a phone interview, skills assessment, and final interview.' },
   { q: 'Is there a contract or minimum commitment?', a: 'Standard contracts are 6-month minimum. We prefer agents who are serious about building a career with us.' },
 ];
 

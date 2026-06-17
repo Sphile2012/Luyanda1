@@ -45,33 +45,36 @@ const Footer = () => {
               </li>
             </ul>
             <h4 className="font-semibold mt-6 mb-3">Follow Us</h4>
-            <div className="flex items-center gap-3">
+            <div className="space-y-2">
               <a
                 href="https://www.linkedin.com/company/drive-agency-sa"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-navy-800 hover:bg-brand-500 flex items-center justify-center transition-colors"
+                className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
                 aria-label="LinkedIn"
               >
-                <span className="text-gray-300 text-xs font-bold leading-none">in</span>
+                <span className="w-6 h-6 rounded bg-navy-800 flex items-center justify-center text-xs font-bold flex-shrink-0">in</span>
+                Drive Agency SA
               </a>
               <a
                 href="https://www.instagram.com/drive_agency_sa?igsh=MW55cWo3dW4yeTk3eg=="
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-navy-800 hover:bg-brand-500 flex items-center justify-center transition-colors"
+                className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
                 aria-label="Instagram"
               >
-                <span className="text-gray-300 text-xs font-bold leading-none">IG</span>
+                <span className="w-6 h-6 rounded bg-navy-800 flex items-center justify-center text-xs font-bold flex-shrink-0">IG</span>
+                @drive_agency_sa
               </a>
               <a
                 href="https://www.tiktok.com/@driveagency_sa"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-navy-800 hover:bg-brand-500 flex items-center justify-center transition-colors"
+                className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
                 aria-label="TikTok"
               >
-                <span className="text-gray-300 text-xs font-bold leading-none">TT</span>
+                <span className="w-6 h-6 rounded bg-navy-800 flex items-center justify-center text-xs font-bold flex-shrink-0">TT</span>
+                @driveagency_sa
               </a>
             </div>
           </div>

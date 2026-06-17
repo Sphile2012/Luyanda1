@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Check } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase';
 
 const steps = [
   { step: '01', icon: Car, title: 'Tell Us What You Want', desc: 'Share your car preferences, budget, and financial situation in a few minutes.' },
@@ -40,12 +40,12 @@ type BuyerForm = {
 
 type AgentForm = {
   first_name: string; last_name: string; email: string; phone: string;
-  city: string; province: string; id_number: string; motivation: string;
+  city: string; province: string; motivation: string;
   how_heard: string; popia_consent: boolean;
 };
 
 const defaultBuyer: BuyerForm = { first_name: '', last_name: '', phone: '', email: '', car_type: '', employment_status: '', popia_consent: false };
-const defaultAgent: AgentForm = { first_name: '', last_name: '', email: '', phone: '', city: '', province: '', id_number: '', motivation: '', how_heard: '', popia_consent: false };
+const defaultAgent: AgentForm = { first_name: '', last_name: '', email: '', phone: '', city: '', province: '', motivation: '', how_heard: '', popia_consent: false };
 
 type Tab = 'car' | 'agent';
 
@@ -77,6 +77,12 @@ const Home = () => {
     try {
       const { error } = await supabase.from('buyer_leads').insert([buyerData]);
       if (error) throw error;
+      // Send confirmation email (non-blocking)
+      fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        body: JSON.stringify({ type: 'buyer_confirmation', to: buyerData.email, name: buyerData.first_name }),
+      }).catch(() => {});
       setBuyerSubmitted(true);
       setBuyerData(defaultBuyer);
     } catch (err) {
@@ -100,6 +106,12 @@ const Home = () => {
     try {
       const { error } = await supabase.from('applications').insert([agentData]);
       if (error) throw error;
+      // Send confirmation email (non-blocking)
+      fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        body: JSON.stringify({ type: 'agent_confirmation', to: agentData.email, name: agentData.first_name }),
+      }).catch(() => {});
       setAgentSubmitted(true);
       setAgentData(defaultAgent);
     } catch (err) {
@@ -116,13 +128,13 @@ const Home = () => {
       <section
         className="relative min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: `url('https://images.pexels.com/photos/3764984/pexels-photo-3764984.jpeg?auto=compress&cs=tinysrgb&w=1920')`,
+          backgroundImage: `url('https://images.pexels.com/photos/1366630/pexels-photo-1366630.jpeg?auto=compress&cs=tinysrgb&w=1920')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60" />
+        {/* Red overlay */}
+        <div className="absolute inset-0 bg-red-900/70" />
 
         {/* Content */}
         <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
@@ -381,10 +393,6 @@ const Home = () => {
                           <option value="free_state">Free State</option>
                         </select>
                       </div>
-                    </div>
-                    <div>
-                      <label className="label">SA ID Number *</label>
-                      <input type="text" name="id_number" value={agentData.id_number} onChange={handleAgentChange} required className="input-field" placeholder="000000 000 00 0" />
                     </div>
                     <div>
                       <label className="label">What motivates you to become an agent? *</label>

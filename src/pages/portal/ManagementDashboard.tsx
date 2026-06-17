@@ -192,7 +192,7 @@ const ManagementDashboard = () => {
       fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
-        body: JSON.stringify({ type: 'agent_approved', to: selectedPendingAgent.email, name: selectedPendingAgent.full_name }),
+        body: JSON.stringify({ type: 'agent_approved', to: selectedPendingAgent.email, name: selectedPendingAgent.full_name, data: { role: approveAgentRole } }),
       }).catch(() => {});
       refreshProfile();
       fetchData();
