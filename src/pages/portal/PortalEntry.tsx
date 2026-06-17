@@ -89,9 +89,14 @@ const PortalEntry = () => {
     try {
       const res = await supabase.auth.signInWithPassword({ email, password });
       if (res.error) {
-        setError(res.error.message === 'Failed to fetch'
-          ? 'Cannot connect to the server. Please try again shortly.'
-          : 'Invalid email or password. Please try again.');
+        const msg = res.error.message || '';
+        if (msg === 'Failed to fetch') {
+          setError('Cannot connect to the server. Please try again shortly.');
+        } else if (msg.toLowerCase().includes('email not confirmed')) {
+          setError('Your email address has not been confirmed yet. Please contact management to activate your account.');
+        } else {
+          setError('Invalid email or password. Please check your details and try again.');
+        }
         setLoading(false);
         return;
       }

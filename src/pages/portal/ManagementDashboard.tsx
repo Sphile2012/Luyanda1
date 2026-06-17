@@ -189,6 +189,13 @@ const ManagementDashboard = () => {
       updated_at: new Date().toISOString(),
     }).eq('id', selectedPendingAgent.id);
     if (!error) {
+      // Confirm the agent's email so they can sign in without email-verification errors
+      fetch(`${supabaseUrl}/functions/v1/confirm-agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        body: JSON.stringify({ user_id: selectedPendingAgent.id }),
+      }).catch(() => {});
+      // Send approval email
       fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
