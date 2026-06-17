@@ -99,10 +99,7 @@ const PortalEntry = () => {
       });
 
       if (signUpError) {
-        const msg = signUpError.message && signUpError.message !== '{}'
-          ? signUpError.message
-          : 'Registration failed. Please try again.';
-        setError(msg);
+        setError(signUpError.message || JSON.stringify(signUpError));
         setLoading(false);
         return;
       }
@@ -117,8 +114,9 @@ const PortalEntry = () => {
       setSuccess('Account created! Your application is pending review. You will be notified once approved.');
       resetFields();
       setAuthMode('signin');
-    } catch {
-      setError('Registration failed. Please check your connection and try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      setError('Signup error: ' + msg);
       setLoading(false);
     }
   };
