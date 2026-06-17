@@ -1,16 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrlValue = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKeyValue = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || '';
+export const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '';
 
-if (!supabaseUrlValue || !supabaseAnonKeyValue) {
-  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables');
-}
-
-export const supabaseUrl = supabaseUrlValue ?? '';
-export const supabaseAnonKey = supabaseAnonKeyValue ?? '';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);
 
 export type Profile = {
   id: string;
