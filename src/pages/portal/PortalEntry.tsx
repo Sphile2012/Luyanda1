@@ -90,18 +90,37 @@ const PortalEntry = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName.trim());
 
-    if (error) {
-      setError(error.message ?? 'Registration failed. Please try again.');
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName.trim() } },
+      });
+
+      if (signUpError) {
+        const msg = signUpError.message && signUpError.message !== '{}'
+          ? signUpError.message
+          : 'Registration failed. Please try again.';
+        setError(msg);
+        setLoading(false);
+        return;
+      }
+
+      if (!data.user) {
+        setError('Could not create account. Please try again.');
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
-      return;
+      setSuccess('Account created! Your application is pending review. You will be notified once approved.');
+      resetFields();
+      setAuthMode('signin');
+    } catch {
+      setError('Registration failed. Please check your connection and try again.');
+      setLoading(false);
     }
-
-    setLoading(false);
-    setSuccess('Account created! Your application is pending review. You will be notified once approved.');
-    resetFields();
-    setAuthMode('signin');
   };
 
   return (
