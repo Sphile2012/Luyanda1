@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-const heroBg = '/images/image.png';
+import heroBg from '../../assets/Screenshot_2026-06-16_110040.png';
 
 const steps = [
   { step: '01', icon: Car, title: 'Tell Us What You Want', desc: 'Share your car preferences, budget, and financial situation in a few minutes.' },
@@ -113,38 +113,10 @@ const Home = () => {
     <div className="w-full font-sans">
 
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={heroBg} alt="Partnership" className="w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/60 to-gray-900/20" />
-        </div>
-        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 lg:px-20 py-32">
-          <div className="max-w-2xl">
-            <span className="inline-block text-[11px] font-bold tracking-[0.2em] uppercase text-brand-400 mb-5">South Africa's Car Finance Experts</span>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6">
-              Your Dream Car,<br />
-              <span className="text-brand-400">Made Easy</span>
-            </h1>
-            <p className="text-lg text-gray-300 leading-relaxed mb-10 max-w-lg">
-              We connect buyers, dealerships, and agents to make vehicle finance simple, transparent, and fast. Our service is 100% free for buyers.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/buyers"
-                className="inline-flex items-center gap-2 px-7 py-4 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-colors shadow-lg"
-              >
-                Find My Car <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/become-agent"
-                className="inline-flex items-center gap-2 px-7 py-4 bg-white/10 text-white font-semibold rounded-full hover:bg-white/20 transition-colors border border-white/20 backdrop-blur-sm"
-              >
-                Become an Agent
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section
+        className="relative min-h-screen"
+        style={{ backgroundImage: `url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      />
 
       {/* ── How it works ── */}
       <section className="bg-white py-24">
