@@ -1,6 +1,12 @@
-import { Component, type ReactNode } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Component, type ReactNode, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }, [pathname]);
+  return null;
+}
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null };
@@ -53,7 +59,8 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <Router>
-        <Routes>
+          <ScrollToTop />
+          <Routes>
           {/* Public Routes */}
           <Route
             path="/"
@@ -126,7 +133,7 @@ function App() {
           <Route path="/agent-dashboard" element={<AgentDashboard />} />
           <Route path="/management-dashboard" element={<ManagementDashboard />} />
         </Routes>
-      </Router>
+        </Router>
       </AuthProvider>
     </ErrorBoundary>
   );

@@ -41,11 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchProfile]);
 
   useEffect(() => {
+    let mounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
@@ -55,15 +57,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        try {
+          await fetchProfile(session.user.id);
+        } catch {
+          // profile fetch failed; still unblock the app
+        }
       }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {
+      // network error getting session
+    }).finally(() => {
+      if (mounted) setLoading(false);
+    });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const signIn = async (email: string, password: string) => {

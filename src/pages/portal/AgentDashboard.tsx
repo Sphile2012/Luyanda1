@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -7,10 +7,10 @@ import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
   Eye, MapPin, DollarSign, ChartBar as BarChart3, ListFilter as Filter,
   Clock, Target, Award, Building, Folder, ClipboardList, MessageSquare, AlertCircle, CheckSquare,
-  Upload, FolderOpen, CheckCircle2,
+  Upload, FolderOpen, CheckCircle2, ShoppingCart, TrendingUp as SalesIcon,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'tasks' | 'messages' | 'inventory' | 'applications' | 'leads' | 'clients' | 'client_folder' | 'commission' | 'reports' | 'management' | 'my_documents';
+type Tab = 'overview' | 'tasks' | 'messages' | 'inventory' | 'applications' | 'leads' | 'clients' | 'my_sales' | 'client_folder' | 'commission' | 'reports' | 'management' | 'my_documents';
 
 const priorityColors: Record<string, string> = {
   low: 'bg-gray-100 text-gray-700',
@@ -23,6 +23,12 @@ const AgentDashboard = () => {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const mainRef = useRef<HTMLElement>(null);
+
+  const switchTab = (tab: Tab) => {
+    setActiveTab(tab);
+    mainRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  };
 
   // Existing state
   const [applications, setApplications] = useState<Application[]>([]);
@@ -230,8 +236,9 @@ const AgentDashboard = () => {
     { id: 'messages', label: 'Messages', icon: MessageSquare, badge: unreadCount },
     { id: 'inventory', label: 'Inventory Browser', icon: Car },
     { id: 'applications', label: 'Applications', icon: FileText },
-    { id: 'leads', label: 'Leads Management', icon: Users },
+    { id: 'leads', label: 'Leads', icon: Users },
     { id: 'clients', label: 'My Clients', icon: Users },
+    { id: 'my_sales', label: 'My Sales', icon: ShoppingCart },
     { id: 'client_folder', label: 'Client Folder', icon: Folder },
     { id: 'commission', label: 'Commission Tracker', icon: DollarSign },
   ];
@@ -240,9 +247,9 @@ const AgentDashboard = () => {
   sidebarItems.push({ id: 'my_documents', label: 'My Documents', icon: FolderOpen });
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="h-screen bg-gray-100 flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-navy-900 text-white flex flex-col">
+      <aside className="w-64 bg-navy-900 text-white flex flex-col overflow-hidden flex-shrink-0">
         <div className="p-4 border-b border-navy-700">
           <div className="flex items-center gap-2">
             <Car className="w-8 h-8 text-brand-400" />
@@ -254,7 +261,7 @@ const AgentDashboard = () => {
           {sidebarItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as Tab)}
+              onClick={() => switchTab(item.id as Tab)}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === item.id ? 'bg-brand-500 text-white' : 'text-gray-300 hover:bg-navy-800 hover:text-white'}`}
             >
               <item.icon className="w-5 h-5" />
@@ -284,7 +291,7 @@ const AgentDashboard = () => {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main ref={mainRef} className="flex-1 p-8 overflow-y-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-navy-900">{isManagement ? 'Agent Dashboard' : 'My Dashboard'}</h1>
@@ -303,7 +310,7 @@ const AgentDashboard = () => {
               {[
                 { label: 'Pending Deals', value: stats.pendingDeals, icon: Clock, bg: 'bg-yellow-100', color: 'text-yellow-600' },
                 { label: 'Closed Deals', value: stats.closedDeals, icon: CheckCircle, bg: 'bg-green-100', color: 'text-green-600' },
-                { label: 'Total Commission', value: `R${stats.totalCommission.toLocaleString()}`, icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600' },
+                { label: 'Total Commission', value: `R ${stats.totalCommission.toLocaleString('en-ZA')}`, icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600' },
                 { label: 'Active Leads', value: stats.activeLeads, icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
@@ -536,7 +543,7 @@ const AgentDashboard = () => {
                         {dealership && <p className="flex items-center gap-1"><Building className="w-4 h-4" />{dealership.name}</p>}
                       </div>
                       <div className="mt-4 flex items-center justify-between">
-                        <p className="text-xl font-bold text-brand-500">R{vehicle.price.toLocaleString()}</p>
+                        <p className="text-xl font-bold text-brand-500">R {vehicle.price.toLocaleString('en-ZA')}</p>
                         <button className="btn-primary text-sm px-4 py-2">View Details</button>
                       </div>
                     </div>
@@ -674,6 +681,131 @@ const AgentDashboard = () => {
           </div>
         )}
 
+        {/* ── My Sales ── */}
+        {activeTab === 'my_sales' && (() => {
+          const myClients = isManagement ? clients : clients.filter(c => c.agent_id === user?.id);
+          const approvedSales = myClients.filter(c => c.status === 'approved');
+
+          const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const currentYear = new Date().getFullYear();
+
+          // Group approved sales by month
+          const monthlySales = monthNames.map((month, idx) => {
+            const salesInMonth = approvedSales.filter(c => {
+              const d = new Date(c.updated_at || c.created_at);
+              return d.getFullYear() === currentYear && d.getMonth() === idx;
+            });
+            return {
+              month,
+              count: salesInMonth.length,
+              commission: salesInMonth.reduce((sum, c) => sum + (c.commission_amount || 0), 0),
+              sales: salesInMonth,
+            };
+          });
+
+          const maxCommission = Math.max(...monthlySales.map(m => m.commission), 1);
+          const totalYearCommission = approvedSales.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+
+          return (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">My Sales</h2>
+                <p className="text-gray-500 text-sm">Approved deals and commission breakdown by month — {currentYear}</p>
+              </div>
+
+              {/* Year summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Total Approved Sales', value: approvedSales.length, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
+                  { label: 'Total Commission', value: `R ${totalYearCommission.toLocaleString('en-ZA')}`, icon: DollarSign, color: 'text-brand-600', bg: 'bg-brand-100' },
+                  { label: 'Pending', value: myClients.filter(c => c.status === 'pending').length, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+                  { label: 'Declined', value: myClients.filter(c => c.status === 'declined').length, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-100' },
+                ].map((s, i) => (
+                  <div key={i} className="bg-white rounded-xl p-5 shadow-sm flex items-center gap-4">
+                    <div className={`w-11 h-11 rounded-lg ${s.bg} flex items-center justify-center flex-shrink-0`}><s.icon className={`w-5 h-5 ${s.color}`} /></div>
+                    <div><p className="text-xs text-gray-500">{s.label}</p><p className={`text-xl font-bold ${s.color}`}>{s.value}</p></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Monthly bar chart */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="font-semibold text-navy-900 mb-6">Commission by Month ({currentYear})</h3>
+                <div className="flex items-end gap-3 h-40">
+                  {monthlySales.map(({ month, commission, count }) => {
+                    const barH = Math.max(4, Math.round((commission / maxCommission) * 128));
+                    const isCurrentMonth = monthNames[new Date().getMonth()] === month;
+                    return (
+                      <div key={month} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-xs text-gray-500 font-medium">
+                          {commission > 0 ? `R ${(commission/1000).toFixed(0)}k` : ''}
+                        </span>
+                        <div
+                          className={`w-full rounded-t transition-all ${isCurrentMonth ? 'bg-brand-500' : 'bg-brand-200'} hover:opacity-80`}
+                          style={{ height: `${barH}px` }}
+                          title={`${count} sale${count !== 1 ? 's' : ''} · R ${commission.toLocaleString('en-ZA')}`}
+                        />
+                        <span className="text-xs text-gray-500">{month}</span>
+                        {count > 0 && <span className="text-xs font-bold text-brand-600">{count}</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Monthly breakdown tables */}
+              {monthlySales.filter(m => m.count > 0).reverse().map(({ month, sales, commission }) => (
+                <div key={month} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold text-navy-900">{month} {currentYear}</h3>
+                      <span className="px-2.5 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">{sales.length} deal{sales.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <span className="font-bold text-green-600">R {commission.toLocaleString('en-ZA')}</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicle</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Budget</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commission (R)</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {sales.map(c => (
+                          <tr key={c.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <p className="font-medium text-navy-900">{c.first_name} {c.last_name}</p>
+                              <p className="text-xs text-gray-500">{c.phone}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-navy-900">{c.vehicle_brand} {c.vehicle_model}</p>
+                              <p className="text-xs text-gray-500">{c.vehicle_colour}</p>
+                            </td>
+                            <td className="px-4 py-3 text-gray-600 text-sm">{c.budget_range}</td>
+                            <td className="px-4 py-3 font-bold text-green-600">R {(c.commission_amount || 0).toLocaleString('en-ZA')}</td>
+                            <td className="px-4 py-3 text-gray-500 text-sm">{new Date(c.updated_at || c.created_at).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+
+              {approvedSales.length === 0 && (
+                <div className="bg-white rounded-xl p-16 shadow-sm text-center text-gray-400">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>No approved sales yet. Once management approves your submitted clients, they'll appear here.</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* ── Client Folder ── */}
         {activeTab === 'client_folder' && (
           <div className="space-y-6">
@@ -720,9 +852,9 @@ const AgentDashboard = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-6">
               {[
-                { label: 'Total Earned', value: `R${stats.totalCommission.toLocaleString()}`, icon: DollarSign, bg: 'bg-green-100', color: 'text-green-600' },
+                { label: 'Total Earned', value: `R ${stats.totalCommission.toLocaleString('en-ZA')}`, icon: DollarSign, bg: 'bg-green-100', color: 'text-green-600' },
                 { label: 'Closed Deals', value: stats.closedDeals, icon: Award, bg: 'bg-brand-100', color: 'text-brand-600' },
-                { label: 'Avg per Deal', value: `R${stats.closedDeals > 0 ? Math.round(stats.totalCommission / stats.closedDeals).toLocaleString() : 0}`, icon: Target, bg: 'bg-blue-100', color: 'text-blue-600' },
+                { label: 'Avg per Deal', value: `R ${stats.closedDeals > 0 ? Math.round(stats.totalCommission / stats.closedDeals).toLocaleString('en-ZA') : 0}`, icon: Target, bg: 'bg-blue-100', color: 'text-blue-600' },
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-3">
@@ -752,7 +884,7 @@ const AgentDashboard = () => {
                         <td className="px-4 py-4"><p className="font-medium text-navy-900">{client.first_name} {client.last_name}</p><p className="text-xs text-gray-500">{client.province}</p></td>
                         <td className="px-4 py-4 text-gray-700">{client.vehicle_brand} {client.vehicle_model}</td>
                         <td className="px-4 py-4"><span className={`px-3 py-1 rounded-full text-xs font-medium ${client.status === 'approved' ? 'bg-green-100 text-green-700' : client.status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{client.status}</span></td>
-                        <td className="px-4 py-4"><p className={`font-bold ${client.status === 'approved' ? 'text-green-600' : 'text-gray-400'}`}>{client.status === 'approved' ? `R${(client.commission_amount || 0).toLocaleString()}` : '—'}</p></td>
+                        <td className="px-4 py-4"><p className={`font-bold ${client.status === 'approved' ? 'text-green-600' : 'text-gray-400'}`}>{client.status === 'approved' ? `R ${(client.commission_amount || 0).toLocaleString('en-ZA')}` : '—'}</p></td>
                         <td className="px-4 py-4 text-sm text-gray-500">{new Date(client.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))}
@@ -786,7 +918,7 @@ const AgentDashboard = () => {
             <div className="grid grid-cols-3 gap-6">
               {[
                 { label: 'Total Deals', value: stats.closedDeals, icon: Award, bg: 'bg-green-100', color: 'text-green-600', bar: Math.min(100, stats.closedDeals * 5), barColor: 'bg-green-500' },
-                { label: 'Total Revenue', value: `R${stats.totalCommission.toLocaleString()}`, icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600', bar: Math.min(100, stats.totalCommission / 100), barColor: 'bg-brand-500' },
+                { label: 'Total Revenue', value: `R ${stats.totalCommission.toLocaleString('en-ZA')}`, icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600', bar: Math.min(100, stats.totalCommission / 100), barColor: 'bg-brand-500' },
                 { label: 'Conversion Rate', value: `${clients.length > 0 ? Math.round((stats.closedDeals / clients.length) * 100) : 0}%`, icon: Target, bg: 'bg-blue-100', color: 'text-blue-600', bar: clients.length > 0 ? Math.round((stats.closedDeals / clients.length) * 100) : 0, barColor: 'bg-blue-500' },
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
@@ -808,7 +940,7 @@ const AgentDashboard = () => {
                     <div key={province} className="border rounded-lg p-4 text-center">
                       <p className="font-medium text-navy-900 text-sm">{province}</p>
                       <p className="text-sm text-gray-600">{provinceClients.length} clients</p>
-                      <p className="text-lg font-bold text-brand-500 mt-2">R{provinceRevenue.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-brand-500 mt-2">R {provinceRevenue.toLocaleString('en-ZA')}</p>
                     </div>
                   );
                 })}
@@ -848,7 +980,7 @@ const AgentDashboard = () => {
                         <td className="px-4 py-4"><span className="px-3 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-700">{agent.role}</span></td>
                         <td className="px-4 py-4"><span className={`px-3 py-1 rounded-full text-xs font-medium ${agent.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{agent.status}</span></td>
                         <td className="px-4 py-4 text-navy-900 font-medium">{closedDeals}</td>
-                        <td className="px-4 py-4 text-navy-900 font-medium">R{totalCommission.toLocaleString()}</td>
+                        <td className="px-4 py-4 text-navy-900 font-medium">R {totalCommission.toLocaleString('en-ZA')}</td>
                       </tr>
                     );
                   })}

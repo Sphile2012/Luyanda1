@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -7,7 +7,7 @@ import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
   Upload, ChartBar as BarChart3, Download, Trash2, Image, DollarSign, UserCheck, UserX,
   ClipboardList, MessageSquare, Send, Plus, X, AlertCircle, Clock, CheckSquare, Briefcase,
-  FolderOpen, ShoppingCart,
+  FolderOpen, ShoppingCart, MapPin,
 } from 'lucide-react';
 
 type Tab = 'overview' | 'tasks' | 'messages' | 'agents' | 'applications' | 'sales' | 'agent_docs' | 'clients' | 'inventory' | 'reports' | 'photos' | 'job_postings';
@@ -67,6 +67,12 @@ const ManagementDashboard = () => {
   const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const mainRef = useRef<HTMLElement>(null);
+
+  const switchTab = (tab: Tab) => {
+    setActiveTab(tab);
+    mainRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  };
 
   const [agents, setAgents] = useState<Profile[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -115,6 +121,15 @@ const ManagementDashboard = () => {
   // Agent docs viewer
   const [selectedDocAgent, setSelectedDocAgent] = useState<Profile | null>(null);
 
+  // Vehicle management state
+  const [showVehicleForm, setShowVehicleForm] = useState(false);
+  const [submittingVehicle, setSubmittingVehicle] = useState(false);
+  const [vehiclePhotoFile, setVehiclePhotoFile] = useState<File | null>(null);
+  const [newVehicle, setNewVehicle] = useState({
+    brand: '', model: '', year: new Date().getFullYear(), colour: '', mileage: 0,
+    price: 0, body_type: '', condition: 'used', province: '',
+  });
+
   useEffect(() => {
     if (authLoading) return;
     if (!user || !profile) { navigate('/portal'); return; }
@@ -138,7 +153,7 @@ const ManagementDashboard = () => {
       supabase.from('profiles').select('*').order('created_at', { ascending: true }),
       supabase.from('applications').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('created_at', { ascending: false }),
-      supabase.from('vehicles').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+      supabase.from('vehicles').select('*').order('created_at', { ascending: false }),
       supabase.from('client_documents').select('*').order('created_at', { ascending: false }),
       supabase.from('tasks').select('*').order('created_at', { ascending: false }),
       supabase.from('messages').select('*').order('created_at', { ascending: false }),
@@ -337,6 +352,48 @@ const ManagementDashboard = () => {
     if (!error) setJobPostings(jobPostings.filter(j => j.id !== jobId));
   };
 
+  // Vehicle management
+  const addVehicle = async () => {
+    if (!newVehicle.brand || !newVehicle.model || !newVehicle.price) return;
+    setSubmittingVehicle(true);
+    let photoUrls: string[] = [];
+
+    if (vehiclePhotoFile) {
+      const ext = vehiclePhotoFile.name.split('.').pop();
+      const path = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from('vehicle_photos').upload(path, vehiclePhotoFile);
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from('vehicle_photos').getPublicUrl(path);
+        if (urlData.publicUrl) photoUrls = [urlData.publicUrl];
+      }
+    }
+
+    const { data, error } = await supabase.from('vehicles').insert({
+      ...newVehicle,
+      photos: photoUrls,
+      is_active: true,
+    }).select().single();
+
+    if (!error && data) {
+      setVehicles([data as Vehicle, ...vehicles]);
+      setNewVehicle({ brand: '', model: '', year: new Date().getFullYear(), colour: '', mileage: 0, price: 0, body_type: '', condition: 'used', province: '' });
+      setVehiclePhotoFile(null);
+      setShowVehicleForm(false);
+    }
+    setSubmittingVehicle(false);
+  };
+
+  const toggleVehicleActive = async (vehicleId: string, is_active: boolean) => {
+    const { error } = await supabase.from('vehicles').update({ is_active }).eq('id', vehicleId);
+    if (!error) setVehicles(vehicles.map(v => v.id === vehicleId ? { ...v, is_active } : v));
+  };
+
+  const deleteVehicle = async (vehicleId: string) => {
+    if (!confirm('Delete this vehicle listing?')) return;
+    const { error } = await supabase.from('vehicles').delete().eq('id', vehicleId);
+    if (!error) setVehicles(vehicles.filter(v => v.id !== vehicleId));
+  };
+
   // CSV export
   const exportCSV = () => {
     const rows = [
@@ -422,9 +479,9 @@ const ManagementDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="h-screen bg-gray-100 flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-navy-900 text-white flex flex-col">
+      <aside className="w-64 bg-navy-900 text-white flex flex-col overflow-hidden flex-shrink-0">
         <div className="p-4 border-b border-navy-700">
           <div className="flex items-center gap-2">
             <Car className="w-8 h-8 text-brand-400" />
@@ -435,7 +492,7 @@ const ManagementDashboard = () => {
           {sidebarItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as Tab)}
+              onClick={() => switchTab(item.id as Tab)}
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                 activeTab === item.id ? 'bg-brand-500 text-white' : 'text-gray-300 hover:bg-navy-800 hover:text-white'
               }`}
@@ -467,7 +524,7 @@ const ManagementDashboard = () => {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main ref={mainRef} className="flex-1 p-8 overflow-y-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-navy-900">Management Dashboard</h1>
@@ -490,7 +547,7 @@ const ManagementDashboard = () => {
                 { label: 'Active Agents', value: stats.activeAgents, icon: Users, bg: 'bg-brand-100', color: 'text-brand-600' },
                 { label: 'Total Deals', value: stats.totalDeals, icon: CheckCircle, bg: 'bg-green-100', color: 'text-green-600' },
                 { label: 'Pending Applications', value: stats.pendingApplications, icon: FileText, bg: 'bg-yellow-100', color: 'text-yellow-600' },
-                { label: 'Total Commission', value: `R${stats.totalCommission.toLocaleString()}`, icon: DollarSign, bg: 'bg-emerald-100', color: 'text-emerald-600' },
+                { label: 'Total Commission', value: `R ${stats.totalCommission.toLocaleString('en-ZA')}`, icon: DollarSign, bg: 'bg-emerald-100', color: 'text-emerald-600' },
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
                   <div className="flex items-center gap-4">
@@ -840,7 +897,7 @@ const ManagementDashboard = () => {
                         <td className="px-4 py-4 text-gray-600 text-sm">{client.budget_range}</td>
                         <td className="px-4 py-4 text-gray-600 text-sm">{agent?.full_name || 'Unassigned'}</td>
                         <td className="px-4 py-4"><span className={`px-3 py-1 rounded-full text-xs font-medium ${client.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : client.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{client.status}</span></td>
-                        <td className="px-4 py-4 text-sm font-medium text-green-600">{client.status === 'approved' ? `R${(client.commission_amount || 0).toLocaleString()}` : '—'}</td>
+                        <td className="px-4 py-4 text-sm font-medium text-green-600">{client.status === 'approved' ? `R ${(client.commission_amount || 0).toLocaleString('en-ZA')}` : '—'}</td>
                         <td className="px-4 py-4">
                           {client.status === 'pending' && (
                             <div className="flex gap-2">
@@ -981,22 +1038,82 @@ const ManagementDashboard = () => {
 
         {/* ── Inventory ── */}
         {activeTab === 'inventory' && (
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-4 border-b border-gray-200"><h3 className="text-lg font-semibold text-navy-900">Vehicle Inventory</h3></div>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">Vehicle Inventory</h2>
+                <p className="text-gray-500 text-sm">Add and manage available cars visible to agents</p>
+              </div>
+              <button
+                onClick={() => setShowVehicleForm(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add Vehicle
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Total Listings', value: vehicles.length, color: 'text-navy-900' },
+                { label: 'Active', value: vehicles.filter(v => v.is_active).length, color: 'text-green-600' },
+                { label: 'Inactive', value: vehicles.filter(v => !v.is_active).length, color: 'text-gray-500' },
+              ].map((s, i) => (
+                <div key={i} className="bg-white rounded-xl p-5 shadow-sm text-center">
+                  <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vehicles.map((vehicle) => (
-                <div key={vehicle.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="h-40 bg-gray-200 flex items-center justify-center">
-                    {vehicle.photos?.[0] ? <img src={vehicle.photos[0]} alt={`${vehicle.brand} ${vehicle.model}`} className="w-full h-full object-cover" /> : <Car className="w-12 h-12 text-gray-400" />}
+                <div key={vehicle.id} className={`bg-white rounded-xl shadow-sm overflow-hidden border ${vehicle.is_active ? 'border-gray-100' : 'border-gray-200 opacity-60'}`}>
+                  <div className="relative h-44 bg-gray-100 flex items-center justify-center">
+                    {vehicle.photos?.[0]
+                      ? <img src={vehicle.photos[0]} alt={`${vehicle.brand} ${vehicle.model}`} className="w-full h-full object-cover" />
+                      : <Car className="w-14 h-14 text-gray-300" />
+                    }
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${vehicle.condition === 'new' ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white'}`}>
+                        {vehicle.condition}
+                      </span>
+                      {!vehicle.is_active && (
+                        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-gray-700 text-white">Inactive</span>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4">
-                    <h4 className="font-semibold text-navy-900">{vehicle.brand} {vehicle.model}</h4>
-                    <p className="text-sm text-gray-600">{vehicle.year} | {vehicle.body_type} | {vehicle.colour}</p>
-                    <p className="text-lg font-bold text-brand-500 mt-2">R{vehicle.price.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500 mt-1">{vehicle.mileage?.toLocaleString()} km | {vehicle.province}</p>
+                    <h4 className="font-bold text-navy-900">{vehicle.brand} {vehicle.model}</h4>
+                    <p className="text-sm text-gray-500 mt-0.5">{vehicle.year} · {vehicle.body_type} · {vehicle.colour}</p>
+                    <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                      <MapPin className="w-3 h-3" />{vehicle.province}
+                      {vehicle.mileage > 0 && <span className="ml-2">{vehicle.mileage.toLocaleString()} km</span>}
+                    </div>
+                    <p className="text-xl font-bold text-brand-500 mt-3">R {vehicle.price.toLocaleString('en-ZA')}</p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={() => toggleVehicleActive(vehicle.id, !vehicle.is_active)}
+                        className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${vehicle.is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                      >
+                        {vehicle.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => deleteVehicle(vehicle.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
+              {vehicles.length === 0 && (
+                <div className="col-span-3 bg-white rounded-xl p-16 shadow-sm text-center text-gray-400">
+                  <Car className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>No vehicles added yet. Click "Add Vehicle" to get started.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1039,7 +1156,7 @@ const ManagementDashboard = () => {
                         <p className="font-medium text-navy-900">{agent.full_name}</p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-1"><div className="bg-brand-500 h-2 rounded-full" style={{ width: `${Math.max(0, Math.min(100, (approvedDeals / Math.max(1, stats.totalDeals)) * 100))}%` }} /></div>
                       </div>
-                      <div className="text-right"><p className="font-bold text-navy-900">{approvedDeals} deals</p><p className="text-sm text-gray-600">R{totalCommission.toLocaleString()}</p></div>
+                      <div className="text-right"><p className="font-bold text-navy-900">{approvedDeals} deals</p><p className="text-sm text-gray-600">R {totalCommission.toLocaleString('en-ZA')}</p></div>
                     </div>
                   );
                 })}
@@ -1242,6 +1359,58 @@ const ManagementDashboard = () => {
                   <Briefcase className="w-4 h-4" />{submittingJob ? 'Posting...' : 'Post Job'}
                 </button>
                 <button onClick={() => setShowJobForm(false)} className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Vehicle Modal ── */}
+      {showVehicleForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-navy-900">Add Vehicle Listing</h3>
+              <button onClick={() => setShowVehicleForm(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="label">Brand <span className="text-red-500">*</span></label><input type="text" value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} className="input-field" placeholder="e.g. Toyota" /></div>
+                <div><label className="label">Model <span className="text-red-500">*</span></label><input type="text" value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} className="input-field" placeholder="e.g. Corolla" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="label">Year</label><input type="number" value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: parseInt(e.target.value) || new Date().getFullYear() })} className="input-field" min="1990" max={new Date().getFullYear() + 1} /></div>
+                <div><label className="label">Colour</label><input type="text" value={newVehicle.colour} onChange={(e) => setNewVehicle({ ...newVehicle, colour: e.target.value })} className="input-field" placeholder="e.g. White" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="label">Condition</label><select value={newVehicle.condition} onChange={(e) => setNewVehicle({ ...newVehicle, condition: e.target.value })} className="input-field"><option value="new">New</option><option value="used">Used</option></select></div>
+                <div><label className="label">Body Type</label><input type="text" value={newVehicle.body_type} onChange={(e) => setNewVehicle({ ...newVehicle, body_type: e.target.value })} className="input-field" placeholder="e.g. Sedan" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Price (R) <span className="text-red-500">*</span></label>
+                  <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">R</span><input type="number" value={newVehicle.price || ''} onChange={(e) => setNewVehicle({ ...newVehicle, price: parseFloat(e.target.value) || 0 })} className="input-field pl-7" placeholder="250000" min="0" /></div>
+                </div>
+                <div><label className="label">Mileage (km)</label><input type="number" value={newVehicle.mileage || ''} onChange={(e) => setNewVehicle({ ...newVehicle, mileage: parseInt(e.target.value) || 0 })} className="input-field" placeholder="0" min="0" /></div>
+              </div>
+              <div><label className="label">Province</label><select value={newVehicle.province} onChange={(e) => setNewVehicle({ ...newVehicle, province: e.target.value })} className="input-field"><option value="">Select province...</option>{['Gauteng','Western Cape','KwaZulu-Natal','Eastern Cape','Free State','Limpopo','Mpumalanga','North West','Northern Cape'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+              <div>
+                <label className="label">Photo (optional)</label>
+                <label className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-colors">
+                  <Upload className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-500">{vehiclePhotoFile ? vehiclePhotoFile.name : 'Choose image...'}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setVehiclePhotoFile(e.target.files?.[0] || null)} />
+                </label>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={addVehicle}
+                  disabled={submittingVehicle || !newVehicle.brand || !newVehicle.model || !newVehicle.price}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 disabled:opacity-50 transition-colors"
+                >
+                  <Car className="w-4 h-4" />{submittingVehicle ? 'Adding...' : 'Add Vehicle'}
+                </button>
+                <button onClick={() => setShowVehicleForm(false)} className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
               </div>
             </div>
           </div>
