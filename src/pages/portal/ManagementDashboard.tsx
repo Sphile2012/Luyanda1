@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import type { Profile, Application, Client, BuyerLead, Vehicle, ClientDocument, Task, Message } from '../../lib/supabase';
+import type { Profile, Application, Client, Vehicle, ClientDocument, Task, Message } from '../../lib/supabase';
 import {
-  Car, Users, FileText, TrendingUp, LogOut, Search, Eye, CircleCheck as CheckCircle,
+  Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
   Upload, ChartBar as BarChart3, Download, Trash2, Image, DollarSign, UserCheck, UserX,
   ClipboardList, MessageSquare, Send, Plus, X, AlertCircle, Clock, CheckSquare, Briefcase,
 } from 'lucide-react';
@@ -20,7 +20,9 @@ type JobPosting = {
   description: string;
   requirements: string;
   is_active: boolean;
+  created_by: string;
   created_at: string;
+  updated_at: string;
 };
 
 const priorityColors: Record<string, string> = {
@@ -1048,8 +1050,6 @@ const ManagementDashboard = () => {
           </div>
         )}
 
-        {/* ── Eye icon for applications ── */}
-        {false && <Eye />}
       </main>
 
       {/* ── Create Task Modal ── */}
