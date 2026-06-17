@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase';
 import type { Profile, Application, Client, ClientDocument, Task, Message, AgentDocument } from '../../lib/supabase';
 import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
@@ -189,6 +189,11 @@ const ManagementDashboard = () => {
       updated_at: new Date().toISOString(),
     }).eq('id', selectedPendingAgent.id);
     if (!error) {
+      fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        body: JSON.stringify({ type: 'agent_approved', to: selectedPendingAgent.email, name: selectedPendingAgent.full_name }),
+      }).catch(() => {});
       refreshProfile();
       fetchData();
       setShowApproveAgentModal(false);

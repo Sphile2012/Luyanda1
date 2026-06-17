@@ -47,6 +47,15 @@ const AgentDashboard = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [notes, setNotes] = useState('');
 
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [addClientForm, setAddClientForm] = useState({ first_name: '', last_name: '', phone: '', email: '', occupation: '', province: '', vehicle_condition: 'either' as 'new' | 'used' | 'either', vehicle_brand: '', vehicle_model: '', vehicle_colour: '', budget_range: '', finance_needed: true, notes: '' });
+  const [addLeadForm, setAddLeadForm] = useState({ first_name: '', last_name: '', phone: '', email: '', car_type: '', employment_status: '' });
+  const [addClientError, setAddClientError] = useState('');
+  const [addLeadError, setAddLeadError] = useState('');
+  const [addClientLoading, setAddClientLoading] = useState(false);
+  const [addLeadLoading, setAddLeadLoading] = useState(false);
+
   // Tasks & Messages state
   const [tasks, setTasks] = useState<Task[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -123,6 +132,30 @@ const AgentDashboard = () => {
   const updateClientStatus = async (clientId: string, status: 'pending' | 'approved' | 'declined') => {
     const { error } = await supabase.from('clients').update({ status, updated_at: new Date().toISOString() }).eq('id', clientId);
     if (!error) { setClients(clients.map(c => c.id === clientId ? { ...c, status } : c)); setShowClientModal(false); }
+  };
+
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddClientLoading(true);
+    setAddClientError('');
+    const { error } = await supabase.from('clients').insert([{ ...addClientForm, agent_id: user?.id, status: 'pending' }]);
+    if (error) { setAddClientError(error.message); setAddClientLoading(false); return; }
+    await fetchData();
+    setShowAddClientModal(false);
+    setAddClientForm({ first_name: '', last_name: '', phone: '', email: '', occupation: '', province: '', vehicle_condition: 'either', vehicle_brand: '', vehicle_model: '', vehicle_colour: '', budget_range: '', finance_needed: true, notes: '' });
+    setAddClientLoading(false);
+  };
+
+  const handleAddLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddLeadLoading(true);
+    setAddLeadError('');
+    const { error } = await supabase.from('buyer_leads').insert([{ ...addLeadForm, assigned_agent_id: user?.id, status: 'new', popia_consent: true }]);
+    if (error) { setAddLeadError(error.message); setAddLeadLoading(false); return; }
+    await fetchData();
+    setShowAddLeadModal(false);
+    setAddLeadForm({ first_name: '', last_name: '', phone: '', email: '', car_type: '', employment_status: '' });
+    setAddLeadLoading(false);
   };
 
   const updateTaskStatus = async (taskId: string, status: Task['status']) => {
@@ -601,11 +634,16 @@ const AgentDashboard = () => {
         {/* ── Leads ── */}
         {activeTab === 'leads' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="bg-white rounded-xl p-4 shadow-sm flex gap-3 items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search leads..." className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-brand-500" />
               </div>
+              {!isManagement && (
+                <button onClick={() => setShowAddLeadModal(true)} className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+                  + Add Lead
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -656,8 +694,13 @@ const AgentDashboard = () => {
         {/* ── Clients ── */}
         {activeTab === 'clients' && (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-navy-900">{isManagement ? 'All Clients' : 'My Clients'}</h3>
+              {!isManagement && (
+                <button onClick={() => setShowAddClientModal(true)} className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors">
+                  + Add Client
+                </button>
+              )}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -1246,6 +1289,140 @@ const AgentDashboard = () => {
           </div>
         </div>
       )}
+      {/* ── Add Lead Modal ── */}
+      {showAddLeadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-navy-900 mb-4">Add New Lead</h3>
+            <form onSubmit={handleAddLead} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">First Name *</label>
+                  <input required className="input-field" placeholder="John" value={addLeadForm.first_name} onChange={e => setAddLeadForm(p => ({ ...p, first_name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Last Name *</label>
+                  <input required className="input-field" placeholder="Doe" value={addLeadForm.last_name} onChange={e => setAddLeadForm(p => ({ ...p, last_name: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="label">Phone *</label>
+                <input required className="input-field" placeholder="+27 123 456 7890" value={addLeadForm.phone} onChange={e => setAddLeadForm(p => ({ ...p, phone: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Email</label>
+                <input type="email" className="input-field" placeholder="john@example.com" value={addLeadForm.email} onChange={e => setAddLeadForm(p => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Car Interest *</label>
+                <input required className="input-field" placeholder="e.g. Toyota Corolla, SUV under R300k" value={addLeadForm.car_type} onChange={e => setAddLeadForm(p => ({ ...p, car_type: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Employment Status *</label>
+                <select required className="input-field" value={addLeadForm.employment_status} onChange={e => setAddLeadForm(p => ({ ...p, employment_status: e.target.value }))}>
+                  <option value="">Select status</option>
+                  <option value="employed">Employed</option>
+                  <option value="self_employed">Self-Employed</option>
+                  <option value="unemployed">Unemployed</option>
+                  <option value="student">Student</option>
+                  <option value="pensioner">Pensioner</option>
+                </select>
+              </div>
+              {addLeadError && <p className="text-sm text-red-600">{addLeadError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddLeadModal(false)} className="flex-1 btn-secondary">Cancel</button>
+                <button type="submit" disabled={addLeadLoading} className="flex-1 btn-primary disabled:opacity-50">{addLeadLoading ? 'Saving...' : 'Add Lead'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Client Modal ── */}
+      {showAddClientModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-navy-900 mb-4">Add New Client</h3>
+            <form onSubmit={handleAddClient} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">First Name *</label>
+                  <input required className="input-field" placeholder="John" value={addClientForm.first_name} onChange={e => setAddClientForm(p => ({ ...p, first_name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Last Name *</label>
+                  <input required className="input-field" placeholder="Doe" value={addClientForm.last_name} onChange={e => setAddClientForm(p => ({ ...p, last_name: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Phone *</label>
+                  <input required className="input-field" placeholder="+27 123 456 7890" value={addClientForm.phone} onChange={e => setAddClientForm(p => ({ ...p, phone: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Email</label>
+                  <input type="email" className="input-field" placeholder="john@example.com" value={addClientForm.email} onChange={e => setAddClientForm(p => ({ ...p, email: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Occupation</label>
+                  <input className="input-field" placeholder="e.g. Teacher" value={addClientForm.occupation} onChange={e => setAddClientForm(p => ({ ...p, occupation: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Province *</label>
+                  <select required className="input-field" value={addClientForm.province} onChange={e => setAddClientForm(p => ({ ...p, province: e.target.value }))}>
+                    <option value="">Select province</option>
+                    {['Gauteng','Western Cape','KwaZulu-Natal','Limpopo','Mpumalanga','North West','Northern Cape','Eastern Cape','Free State'].map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="label">Brand</label>
+                  <input className="input-field" placeholder="Toyota" value={addClientForm.vehicle_brand} onChange={e => setAddClientForm(p => ({ ...p, vehicle_brand: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Model</label>
+                  <input className="input-field" placeholder="Corolla" value={addClientForm.vehicle_model} onChange={e => setAddClientForm(p => ({ ...p, vehicle_model: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Colour</label>
+                  <input className="input-field" placeholder="White" value={addClientForm.vehicle_colour} onChange={e => setAddClientForm(p => ({ ...p, vehicle_colour: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Condition</label>
+                  <select className="input-field" value={addClientForm.vehicle_condition} onChange={e => setAddClientForm(p => ({ ...p, vehicle_condition: e.target.value as 'new' | 'used' | 'either' }))}>
+                    <option value="either">Either</option>
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Budget Range *</label>
+                  <input required className="input-field" placeholder="e.g. R150k - R250k" value={addClientForm.budget_range} onChange={e => setAddClientForm(p => ({ ...p, budget_range: e.target.value }))} />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="finance_needed" checked={addClientForm.finance_needed} onChange={e => setAddClientForm(p => ({ ...p, finance_needed: e.target.checked }))} className="accent-brand-500" />
+                <label htmlFor="finance_needed" className="text-sm text-gray-600">Finance needed</label>
+              </div>
+              <div>
+                <label className="label">Notes</label>
+                <textarea rows={3} className="input-field" placeholder="Any additional notes..." value={addClientForm.notes} onChange={e => setAddClientForm(p => ({ ...p, notes: e.target.value }))} />
+              </div>
+              {addClientError && <p className="text-sm text-red-600">{addClientError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddClientModal(false)} className="flex-1 btn-secondary">Cancel</button>
+                <button type="submit" disabled={addClientLoading} className="flex-1 btn-primary disabled:opacity-50">{addClientLoading ? 'Saving...' : 'Add Client'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

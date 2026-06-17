@@ -32,6 +32,7 @@ import Footer from './components/layout/Footer';
 import WhatsAppButton from './components/layout/WhatsAppButton';
 import Home from './pages/public/Home';
 import Buyers from './pages/public/Buyers';
+import Cars from './pages/public/Cars';
 import Dealerships from './pages/public/Dealerships';
 import BecomeAgent from './pages/public/BecomeAgent';
 import About from './pages/public/About';
@@ -91,6 +92,14 @@ function App() {
             element={
               <PublicLayout>
                 <Dealerships />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/cars"
+            element={
+              <PublicLayout>
+                <Cars />
               </PublicLayout>
             }
           />

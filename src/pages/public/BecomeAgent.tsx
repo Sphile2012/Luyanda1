@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase';
 import { ArrowRight, Check, DollarSign, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 
 type FormData = {
@@ -9,7 +9,6 @@ type FormData = {
   phone: string;
   city: string;
   province: string;
-  id_number: string;
   motivation: string;
   how_heard: string;
   popia_consent: boolean;
@@ -32,7 +31,6 @@ const BecomeAgent = () => {
     phone: '',
     city: '',
     province: '',
-    id_number: '',
     motivation: '',
     how_heard: '',
     popia_consent: false,
@@ -56,6 +54,12 @@ const BecomeAgent = () => {
       if (!formData.popia_consent) throw new Error('Please consent to the POPIA policy');
       const { error: insertError } = await supabase.from('applications').insert([formData]);
       if (insertError) throw insertError;
+      // Send confirmation email (non-blocking)
+      fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        body: JSON.stringify({ type: 'agent_confirmation', to: formData.email, name: formData.first_name }),
+      }).catch(() => {});
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
@@ -184,10 +188,6 @@ const BecomeAgent = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="label">SA ID Number *</label>
-                  <input type="text" name="id_number" value={formData.id_number} onChange={handleChange} required className="input-field" placeholder="000000 000 00 0" />
-                </div>
-                <div>
                   <label className="label">What motivates you to become an agent? *</label>
                   <textarea name="motivation" value={formData.motivation} onChange={handleChange} required rows={4} className="input-field" placeholder="Tell us why you want to join our team..." />
                 </div>
@@ -248,7 +248,7 @@ const BecomeAgent = () => {
                     'Phone interview with hiring manager',
                     'Skills assessment',
                     'Final interview and offer',
-                    'Onboarding and paid training',
+                    'Onboarding and training',
                   ].map((step, i) => (
                     <li key={i} className="flex gap-3 text-sm text-gray-600">
                       <span className="font-bold text-brand-500 flex-shrink-0">{i + 1}.</span>

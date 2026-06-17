@@ -10,10 +10,10 @@ const About = () => {
         <div className="max-w-4xl mx-auto">
           <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-brand-400 mb-4 block">Our Story</span>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
-            We started because buying a car in South Africa was broken.
+            We founded our business because the car-buying process in South Africa was fundamentally broken.
           </h1>
           <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
-            Not slightly inconvenient — genuinely broken. We decided to fix it, one deal at a time.
+            It wasn't just an inconvenience; the system was flawed. We set out to change that, one seamless transaction at a time.
           </p>
         </div>
       </section>
