@@ -128,7 +128,7 @@ const Home = () => {
       <section
         className="relative min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: `url('https://images.pexels.com/photos/17773135/pexels-photo-17773135.jpeg?auto=compress&cs=tinysrgb&w=1920')`,
+          backgroundImage: `url('https://images.pexels.com/photos/17590508/pexels-photo-17590508.jpeg?auto=compress&cs=tinysrgb&w=1920')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
