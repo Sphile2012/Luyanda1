@@ -237,6 +237,15 @@ const ManagementDashboard = () => {
       updated_at: new Date().toISOString(),
     }).eq('id', selectedSale.id);
     if (!error) {
+      // Send approval email if client has email
+      if (selectedSale.email) {
+        const vehicle = `${selectedSale.vehicle_brand || ''} ${selectedSale.vehicle_model || ''}`.trim() || 'your vehicle';
+        fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+          body: JSON.stringify({ type: 'client_approved', to: selectedSale.email, name: selectedSale.first_name, data: { vehicle } }),
+        }).catch(() => {});
+      }
       setClients(clients.map(c => c.id === selectedSale.id ? { ...c, status: 'approved', commission_amount: commission } : c));
       setShowSaleApproveModal(false);
       setSelectedSale(null);
@@ -252,6 +261,15 @@ const ManagementDashboard = () => {
       updated_at: new Date().toISOString(),
     }).eq('id', selectedSale.id);
     if (!error) {
+      // Send decline email if client has email
+      if (selectedSale.email) {
+        const vehicle = `${selectedSale.vehicle_brand || ''} ${selectedSale.vehicle_model || ''}`.trim() || 'your vehicle';
+        fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+          body: JSON.stringify({ type: 'client_declined', to: selectedSale.email, name: selectedSale.first_name, data: { vehicle, reason: saleDeclineReason } }),
+        }).catch(() => {});
+      }
       setClients(clients.map(c => c.id === selectedSale.id ? { ...c, status: 'declined' } : c));
       setShowSaleDeclineModal(false);
       setSelectedSale(null);

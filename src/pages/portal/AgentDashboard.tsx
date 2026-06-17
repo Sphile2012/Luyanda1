@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase';
 import type { Profile, Application, Client, BuyerLead, Vehicle, ClientDocument, Dealership, Task, Message, AgentDocument } from '../../lib/supabase';
 import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
@@ -140,6 +140,14 @@ const AgentDashboard = () => {
     setAddClientError('');
     const { error } = await supabase.from('clients').insert([{ ...addClientForm, agent_id: user?.id, status: 'pending' }]);
     if (error) { setAddClientError(error.message); setAddClientLoading(false); return; }
+    // Send signup confirmation email if client has an email address
+    if (addClientForm.email) {
+      fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        body: JSON.stringify({ type: 'client_signup', to: addClientForm.email, name: addClientForm.first_name }),
+      }).catch(() => {});
+    }
     await fetchData();
     setShowAddClientModal(false);
     setAddClientForm({ first_name: '', last_name: '', phone: '', email: '', occupation: '', province: '', vehicle_condition: 'either', vehicle_brand: '', vehicle_model: '', vehicle_colour: '', budget_range: '', finance_needed: true, notes: '' });

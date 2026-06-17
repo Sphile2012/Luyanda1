@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 type EmailPayload = {
-  type: "buyer_confirmation" | "agent_confirmation" | "agent_approved";
+  type: "buyer_confirmation" | "agent_confirmation" | "agent_approved" | "client_signup" | "client_approved" | "client_declined";
   to: string;
   name: string;
   data?: Record<string, string>;
@@ -110,6 +110,97 @@ function agentApprovedHtml(name: string, role: string) {
   `;
 }
 
+function clientSignupHtml(name: string) {
+  return `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
+      <div style="background:#1e3a5f;padding:32px 40px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:24px;font-weight:800">Drive Agency</h1>
+        <p style="color:#93c5fd;margin:8px 0 0;font-size:13px;letter-spacing:0.1em;text-transform:uppercase">South Africa</p>
+      </div>
+      <div style="padding:40px">
+        <h2 style="color:#111827;margin:0 0 16px;font-size:20px">Hi ${name},</h2>
+        <p style="color:#4b5563;line-height:1.7;margin:0 0 16px">
+          Thank you for registering with <strong>Drive Agency</strong>. Your profile has been created and one of our agents is now working on finding you the perfect vehicle.
+        </p>
+        <p style="color:#4b5563;line-height:1.7;margin:0 0 24px">
+          We will keep you updated every step of the way. Sit back and let us handle everything.
+        </p>
+        <div style="background:#f0f9ff;border-left:4px solid #3b82f6;border-radius:4px;padding:16px 20px;margin:0 0 24px">
+          <p style="color:#1e40af;margin:0;font-size:14px;font-weight:600">What happens next?</p>
+          <p style="color:#3b82f6;margin:8px 0 0;font-size:14px;line-height:1.6">
+            1. Your agent reviews your requirements<br>
+            2. We match you with the right vehicle and dealership<br>
+            3. We handle all the paperwork and financing<br>
+            4. You show up, sign, and drive
+          </p>
+        </div>
+        <p style="color:#9ca3af;font-size:13px;margin:0">Need help? Call us on <strong style="color:#111827">066 426 8711</strong></p>
+      </div>
+      <div style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="color:#9ca3af;font-size:12px;margin:0">&copy; ${new Date().getFullYear()} Drive Agency South Africa. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+}
+
+function clientApprovedHtml(name: string, vehicle: string) {
+  return `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
+      <div style="background:#1e3a5f;padding:32px 40px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:24px;font-weight:800">Drive Agency</h1>
+        <p style="color:#93c5fd;margin:8px 0 0;font-size:13px;letter-spacing:0.1em;text-transform:uppercase">South Africa</p>
+      </div>
+      <div style="padding:40px">
+        <h2 style="color:#111827;margin:0 0 16px;font-size:20px">Great news, ${name}!</h2>
+        <p style="color:#4b5563;line-height:1.7;margin:0 0 16px">
+          Your application for the <strong>${vehicle}</strong> has been <strong style="color:#16a34a">approved</strong> by Drive Agency.
+        </p>
+        <p style="color:#4b5563;line-height:1.7;margin:0 0 24px">
+          Your agent will be in touch shortly to confirm the next steps and arrange everything for you.
+        </p>
+        <div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:4px;padding:16px 20px;margin:0 0 24px">
+          <p style="color:#15803d;margin:0;font-size:14px;font-weight:600">What happens next?</p>
+          <p style="color:#16a34a;margin:8px 0 0;font-size:14px;line-height:1.6">
+            1. Your agent contacts you to confirm the deal<br>
+            2. Final paperwork is completed<br>
+            3. You show up at the dealership<br>
+            4. You drive away in your new car
+          </p>
+        </div>
+        <p style="color:#9ca3af;font-size:13px;margin:0">Need help? Call us on <strong style="color:#111827">066 426 8711</strong></p>
+      </div>
+      <div style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="color:#9ca3af;font-size:12px;margin:0">&copy; ${new Date().getFullYear()} Drive Agency South Africa. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+}
+
+function clientDeclinedHtml(name: string, vehicle: string, reason: string) {
+  return `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
+      <div style="background:#1e3a5f;padding:32px 40px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:24px;font-weight:800">Drive Agency</h1>
+        <p style="color:#93c5fd;margin:8px 0 0;font-size:13px;letter-spacing:0.1em;text-transform:uppercase">South Africa</p>
+      </div>
+      <div style="padding:40px">
+        <h2 style="color:#111827;margin:0 0 16px;font-size:20px">Hi ${name},</h2>
+        <p style="color:#4b5563;line-height:1.7;margin:0 0 16px">
+          We regret to inform you that your application for the <strong>${vehicle}</strong> has not been successful at this time.
+        </p>
+        ${reason ? `<div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:4px;padding:16px 20px;margin:0 0 24px"><p style="color:#b91c1c;margin:0;font-size:14px;font-weight:600">Reason:</p><p style="color:#dc2626;margin:8px 0 0;font-size:14px;line-height:1.6">${reason}</p></div>` : ''}
+        <p style="color:#4b5563;line-height:1.7;margin:0 0 24px">
+          Please don't be discouraged. Our team can still help you find alternative options that may better suit your current situation. Contact us to explore other vehicles or financing options.
+        </p>
+        <p style="color:#9ca3af;font-size:13px;margin:0">Call us on <strong style="color:#111827">066 426 8711</strong> to discuss your options.</p>
+      </div>
+      <div style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="color:#9ca3af;font-size:12px;margin:0">&copy; ${new Date().getFullYear()} Drive Agency South Africa. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -141,6 +232,15 @@ Deno.serve(async (req: Request) => {
     } else if (type === "agent_approved") {
       subject = "Your Account Has Been Approved — Drive Agency";
       html = agentApprovedHtml(name, data.role ?? "");
+    } else if (type === "client_signup") {
+      subject = "Welcome to Drive Agency — We're On It";
+      html = clientSignupHtml(name);
+    } else if (type === "client_approved") {
+      subject = "Your Application Has Been Approved — Drive Agency";
+      html = clientApprovedHtml(name, data.vehicle ?? "your vehicle");
+    } else if (type === "client_declined") {
+      subject = "Update on Your Application — Drive Agency";
+      html = clientDeclinedHtml(name, data.vehicle ?? "your vehicle", data.reason ?? "");
     } else {
       return new Response(JSON.stringify({ error: "Unknown email type" }), {
         status: 400,
