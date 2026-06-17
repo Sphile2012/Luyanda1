@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Car, Users, Building2, CheckCircle, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import heroBg from '../../assets/Screenshot_2026-06-16_110040.png';
 
 const steps = [
   { step: '01', icon: Car, title: 'Tell Us What You Want', desc: 'Share your car preferences, budget, and financial situation in a few minutes.' },
@@ -51,6 +50,7 @@ const defaultAgent: AgentForm = { first_name: '', last_name: '', email: '', phon
 type Tab = 'car' | 'agent';
 
 const Home = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('car');
 
   const [buyerData, setBuyerData] = useState<BuyerForm>(defaultBuyer);
@@ -114,9 +114,46 @@ const Home = () => {
 
       {/* ── Hero ── */}
       <section
-        className="relative min-h-screen"
-        style={{ backgroundImage: `url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-      />
+        className="relative min-h-screen flex items-center justify-center"
+        style={{
+          backgroundImage: `url('/images/WhatsApp_Image_2026-06-17_at_10.49.37.jpeg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/60" />
+
+        {/* Content */}
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
+          <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-brand-400 mb-6">
+            South Africa's Car Matchmaking Service
+          </p>
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-2">
+            We find the deal.
+          </h1>
+          <h1 className="text-5xl md:text-7xl font-extrabold text-brand-400 leading-tight mb-8">
+            You drive the car.
+          </h1>
+          <p className="text-gray-300 text-lg md:text-xl max-w-xl mx-auto leading-relaxed mb-10">
+            Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/buyers')}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full text-base transition-all duration-200 hover:scale-105 shadow-lg"
+            >
+              Find My Car <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => navigate('/dealerships')}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gray-900/80 hover:bg-gray-800 text-white font-bold rounded-full text-base transition-all duration-200 border border-gray-600 hover:border-gray-400"
+            >
+              Partner With Us
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* ── How it works ── */}
       <section className="bg-white py-24">

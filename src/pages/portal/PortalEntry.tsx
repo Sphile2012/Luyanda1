@@ -231,7 +231,7 @@ const PortalEntry = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <img src="/image.png" alt="Drive Agency" className="h-14 w-14 rounded-2xl object-cover shadow-md" />
+            <img src="/icons/WhatsApp_Image_2026-06-13_at_15.08.17.jpeg" alt="Drive Agency" className="h-14 w-14 rounded-2xl object-cover shadow-md" />
             <span className="text-2xl font-bold text-navy-500 tracking-tight">Drive Agency</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Staff Portal</h1>
