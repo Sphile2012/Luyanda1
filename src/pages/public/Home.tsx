@@ -128,13 +128,13 @@ const Home = () => {
       <section
         className="relative min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: `url('/images/WhatsApp_Image_2026-06-17_at_10.49.37.jpeg')`,
+          backgroundImage: `url('https://images.pexels.com/photos/17773135/pexels-photo-17773135.jpeg?auto=compress&cs=tinysrgb&w=1920')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center top',
+          backgroundPosition: 'center',
         }}
       >
-        {/* Dark overlay — same as the design photo */}
-        <div className="absolute inset-0 bg-black/60" />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/65" />
 
         {/* Content */}
         <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">

@@ -1057,7 +1057,6 @@ const AgentDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {([
                 { type: 'id_document' as const, label: 'SA ID Document', required: true },
-                { type: 'drivers_license' as const, label: "Driver's License", required: true },
               ] as Array<{ type: AgentDocument['document_type']; label: string; required: boolean }>).map(({ type, label, required }) => {
                 const uploaded = agentDocs.find(d => d.document_type === type && !d.month_label);
                 const isLoading = docUploading === type;
@@ -1108,56 +1107,6 @@ const AgentDashboard = () => {
                   </div>
                 );
               })}
-            </div>
-
-            {/* Bank Statements — 3 months required */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-navy-900">Bank Statements</h3>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Required · 3 months</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <span>{agentDocs.filter(d => d.document_type === 'bank_statement').length}</span>
-                  <span className="text-gray-400">/</span>
-                  <span className="text-gray-500">3 uploaded</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {(['Month 1', 'Month 2', 'Month 3'] as const).map((month) => {
-                  const uploaded = agentDocs.find(d => d.document_type === 'bank_statement' && d.month_label === month);
-                  const isLoading = docUploading === `bank_statement-${month}`;
-                  return (
-                    <div key={month} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-navy-900">{month}</p>
-                        {uploaded ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <span className="w-4 h-4 rounded-full border-2 border-gray-300 block"></span>}
-                      </div>
-                      {uploaded && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-600 truncate">{uploaded.file_name}</p>
-                          <button onClick={() => getSignedDocUrl(uploaded.file_path)} className="text-xs text-brand-600 hover:text-brand-700 font-medium underline">View</button>
-                        </div>
-                      )}
-                      <label className={`flex items-center justify-center gap-1 w-full px-3 py-2 rounded-lg border border-dashed cursor-pointer text-xs transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : 'border-brand-300 hover:bg-brand-50'}`}>
-                        <Upload className="w-3 h-3 text-brand-500" />
-                        <span className="text-brand-600 font-medium">{isLoading ? 'Uploading…' : uploaded ? 'Replace' : 'Upload'}</span>
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          className="hidden"
-                          disabled={isLoading}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) uploadAgentDoc('bank_statement', month, f);
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Payslips — 3 months optional */}
