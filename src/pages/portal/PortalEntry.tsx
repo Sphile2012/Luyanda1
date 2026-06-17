@@ -43,20 +43,37 @@ const PortalEntry = () => {
     setError(null);
     setLoading(true);
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    let data: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data'] | null = null;
+    try {
+      const res = await supabase.auth.signInWithPassword({ email, password });
+      if (res.error) {
+        setError(res.error.message === 'Failed to fetch'
+          ? 'Cannot connect to the server. Please try again shortly.'
+          : 'Invalid email or password. Please try again.');
+        setLoading(false);
+        return;
+      }
+      data = res.data;
+    } catch {
+      setError('Cannot connect to the server. Please try again shortly.');
+      setLoading(false);
+      return;
+    }
 
-    if (authError || !data.user) {
+    if (!data?.user) {
       setError('Invalid email or password. Please try again.');
       setLoading(false);
       return;
     }
+
+    const signedInUser = data.user;
 
     // Fetch role — retry once in case of brief timing delay
     const fetchRole = async () => {
       const { data: p, error: pErr } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', data.user.id)
+        .eq('id', signedInUser.id)
         .maybeSingle();
       return { role: p?.role ?? null, error: pErr };
     };
@@ -127,7 +144,9 @@ const PortalEntry = () => {
       setAuthMode('signin');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError('Signup error: ' + msg);
+      setError(msg === 'Failed to fetch'
+        ? 'Cannot connect to the server. Please try again shortly.'
+        : 'Signup error: ' + msg);
       setLoading(false);
     }
   };
