@@ -56,7 +56,7 @@ const Footer = () => {
                 <span className="text-gray-300 text-xs font-bold leading-none">in</span>
               </a>
               <a
-                href="https://www.instagram.com/driveagencysa"
+                href="https://www.instagram.com/drive_agency_sa?igsh=MW55cWo3dW4yeTk3eg=="
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 rounded-lg bg-navy-800 hover:bg-brand-500 flex items-center justify-center transition-colors"
@@ -65,13 +65,13 @@ const Footer = () => {
                 <span className="text-gray-300 text-xs font-bold leading-none">IG</span>
               </a>
               <a
-                href="https://www.facebook.com/driveagencysa"
+                href="https://www.tiktok.com/@driveagency_sa"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 rounded-lg bg-navy-800 hover:bg-brand-500 flex items-center justify-center transition-colors"
-                aria-label="Facebook"
+                aria-label="TikTok"
               >
-                <span className="text-gray-300 text-xs font-bold leading-none">f</span>
+                <span className="text-gray-300 text-xs font-bold leading-none">TT</span>
               </a>
             </div>
           </div>
