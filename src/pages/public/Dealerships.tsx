@@ -232,7 +232,7 @@ const Dealerships = () => {
                 <ul className="space-y-3">
                   {[
                     'Consistent qualified buyer stream',
-                    'No upfront fees — commission only',
+                    'No upfront fees, commission only',
                     'Marketing and promotional support',
                     'Dedicated account manager',
                     'Performance analytics dashboard',

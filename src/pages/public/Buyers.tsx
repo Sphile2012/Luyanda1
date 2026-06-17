@@ -17,8 +17,8 @@ type FormData = {
 const carBrands = ['Toyota', 'Volkswagen', 'Ford', 'BMW', 'Mercedes-Benz', 'Hyundai', 'Kia', 'Nissan', 'Audi', 'Honda', 'Mazda', 'Isuzu', 'Haval', 'Suzuki', 'Chevrolet', 'Jeep', 'Renault', 'Mitsubishi'];
 
 const faqs = [
-  { q: 'How long does the process take?', a: 'Most buyers get matched and approved within 24–48 hours. Our agents work quickly to find your ideal match.' },
-  { q: 'Is it really free for buyers?', a: 'Yes, 100% free. We earn a commission from dealerships when deals close — buyers pay nothing.' },
+  { q: 'How long does the process take?', a: 'Most buyers get matched and approved within 24 to 48 hours. Our agents work quickly to find your ideal match.' },
+  { q: 'Is it really free for buyers?', a: 'Yes, 100% free. We earn a commission from dealerships when deals close, buyers pay nothing.' },
   { q: 'What if I have bad credit?', a: 'We work with dealerships that specialise in various credit profiles, including lower credit scores. We find what works for you.' },
   { q: 'Do I need a deposit?', a: 'Not always. Depending on your credit profile and the vehicle, some deals require no deposit. Your agent will explain all options.' },
   { q: 'Can I choose any car brand?', a: 'Yes. We work with over 50 dealerships stocking all major brands across South Africa.' },

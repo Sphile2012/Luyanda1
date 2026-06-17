@@ -13,14 +13,14 @@ const cards = [
   {
     icon: Car,
     title: 'Car Buyers',
-    desc: "Find your perfect vehicle with financing that fits your budget. Our service is 100% free for buyers — always.",
+    desc: "Find your perfect vehicle with financing that fits your budget. Our service is 100% free for buyers, always.",
     cta: 'Find My Car',
     link: '/buyers',
   },
   {
     icon: Building2,
     title: 'Dealerships',
-    desc: 'Receive a steady stream of pre-screened, qualified buyers. You focus on closing — we handle the match.',
+    desc: 'Receive a steady stream of pre-screened, qualified buyers. You focus on closing, we handle the match.',
     cta: 'Partner With Us',
     link: '/dealerships',
   },
@@ -148,7 +148,7 @@ const Home = () => {
             You drive the car.
           </h1>
           <p className="text-gray-300 text-lg md:text-xl max-w-xl mx-auto leading-relaxed mb-10">
-            Tell us what you're looking for. We handle everything — paperwork, dealership, approval. You just show up and drive.
+            Tell us what you're looking for. We handle everything: paperwork, dealership, approval. You just show up and drive.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -174,7 +174,7 @@ const Home = () => {
             <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-brand-500 mb-3 block">Simple Process</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">How It Works</h2>
             <p className="text-gray-500 max-w-xl mx-auto text-[17px] leading-relaxed">
-              From first enquiry to driving away — three straightforward steps.
+              From first enquiry to driving away, three straightforward steps.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">

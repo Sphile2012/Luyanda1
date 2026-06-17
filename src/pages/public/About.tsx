@@ -49,7 +49,7 @@ const About = () => {
               {
                 icon: Heart,
                 title: 'The buyer comes first',
-                desc: "We represent the buyer, not the dealership. Our agents' job is to find the right car at the right terms for the person sitting across from them — nothing else.",
+                desc: "We represent the buyer, not the dealership. Our agents' job is to find the right car at the right terms for the person sitting across from them, nothing else.",
               },
               {
                 icon: Shield,
@@ -89,7 +89,7 @@ const About = () => {
                 A team that actually knows this industry
               </h2>
               <p className="text-gray-500 text-[16px] leading-[1.8] mb-5">
-                Our agents come from backgrounds in banking, vehicle finance, and dealership sales. They've sat on both sides of the table. That experience is something you can't fake — it's what allows them to spot a good deal and walk away from a bad one.
+                Our agents come from backgrounds in banking, vehicle finance, and dealership sales. They've sat on both sides of the table. That experience is something you can't fake, it's what allows them to spot a good deal and walk away from a bad one.
               </p>
               <p className="text-gray-500 text-[16px] leading-[1.8] mb-8">
                 We keep our team small on purpose. We'd rather have fewer agents doing great work than scale too fast and compromise the quality of service we've built our name on.

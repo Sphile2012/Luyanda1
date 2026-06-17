@@ -1003,7 +1003,7 @@ const ManagementDashboard = () => {
                                 { label: `Payslip (${payslipCount})`, ok: payslipCount > 0, optional: true },
                               ].map((item, i) => (
                                 <span key={i} className={`px-2 py-1 rounded-full font-medium ${item.ok ? 'bg-green-100 text-green-700' : item.optional ? 'bg-gray-100 text-gray-500' : 'bg-red-100 text-red-600'}`}>
-                                  {item.ok ? '✓' : item.optional ? '–' : '✗'} {item.label}
+                                  {item.ok ? '✓' : item.optional ? 'N/A' : '✗'} {item.label}
                                 </span>
                               ))}
                             </div>
@@ -1365,7 +1365,7 @@ const ManagementDashboard = () => {
                 <div><label className="label">Type</label><select value={newJob.type} onChange={(e) => setNewJob({ ...newJob, type: e.target.value })} className="input-field"><option value="remote">Remote</option><option value="in_office">In-Office</option><option value="hybrid">Hybrid</option></select></div>
                 <div><label className="label">Location <span className="text-red-500">*</span></label><input type="text" value={newJob.location} onChange={(e) => setNewJob({ ...newJob, location: e.target.value })} className="input-field" placeholder="e.g. Gauteng" /></div>
               </div>
-              <div><label className="label">Salary Range <span className="text-red-500">*</span></label><input type="text" value={newJob.salary_range} onChange={(e) => setNewJob({ ...newJob, salary_range: e.target.value })} className="input-field" placeholder="e.g. R15,000 – R50,000/mo" /></div>
+              <div><label className="label">Salary Range <span className="text-red-500">*</span></label><input type="text" value={newJob.salary_range} onChange={(e) => setNewJob({ ...newJob, salary_range: e.target.value })} className="input-field" placeholder="e.g. R15,000 to R50,000/mo" /></div>
               <div><label className="label">Job Description <span className="text-red-500">*</span></label><textarea value={newJob.description} onChange={(e) => setNewJob({ ...newJob, description: e.target.value })} className="input-field min-h-[90px]" placeholder="Describe the role..." /></div>
               <div><label className="label">Requirements <span className="text-red-500">*</span></label><textarea value={newJob.requirements} onChange={(e) => setNewJob({ ...newJob, requirements: e.target.value })} className="input-field min-h-[80px]" placeholder="List requirements..." /></div>
               <div className="flex gap-3 pt-2">
