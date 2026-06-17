@@ -150,3 +150,16 @@ export type Message = {
   is_read: boolean;
   created_at: string;
 };
+
+export type AgentDocument = {
+  id: string;
+  agent_id: string;
+  document_type: 'id_document' | 'drivers_license' | 'bank_statement' | 'payslip';
+  month_label: string | null;
+  file_name: string;
+  file_path: string;
+  file_size: number | null;
+  mime_type: string | null;
+  created_at: string;
+  updated_at: string;
+};
