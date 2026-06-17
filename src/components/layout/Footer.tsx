@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Share2 } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -77,18 +76,13 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Connect</h4>
-            <div className="flex gap-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
-                aria-label="Facebook"
-              >
-                <Share2 className="w-5 h-5" />
-              </a>
-            </div>
+            <h4 className="font-semibold mb-4">Contact</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>066 426 8711</li>
+              <li>02 Taylor Street</li>
+              <li>La Colline, Stellenbosch</li>
+              <li>7600</li>
+            </ul>
           </div>
         </div>
 

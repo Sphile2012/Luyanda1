@@ -260,8 +260,8 @@ const Popia = () => {
             <div className="bg-gray-100 p-6 rounded-lg space-y-2">
               <p className="text-gray-900 font-semibold">Data Protection Officer</p>
               <p className="text-gray-600">Drive Agency South Africa</p>
-              <p className="text-gray-600">Email: dpo@driveagency.co.za</p>
-              <p className="text-gray-600">Phone: +27 (0) 10 590 0123</p>
+              <p className="text-gray-600">Phone: 066 426 8711</p>
+              <p className="text-gray-600">Address: 02 Taylor Street, La Colline, Stellenbosch, 7600</p>
             </div>
           </section>
 
@@ -332,9 +332,8 @@ const Popia = () => {
             </p>
             <div className="bg-gray-100 p-6 rounded-lg space-y-2">
               <p className="text-gray-900 font-semibold">Drive Agency South Africa</p>
-              <p className="text-gray-600">Email: privacy@driveagency.co.za</p>
-              <p className="text-gray-600">Phone: +27 (0) 10 590 0123</p>
-              <p className="text-gray-600">Address: Johannesburg, South Africa</p>
+              <p className="text-gray-600">Phone: 066 426 8711</p>
+              <p className="text-gray-600">Address: 02 Taylor Street, La Colline, Stellenbosch, 7600</p>
             </div>
           </section>
         </div>
