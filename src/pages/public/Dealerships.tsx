@@ -46,8 +46,20 @@ const Dealerships = () => {
     setError('');
     try {
       if (!formData.popia_consent) throw new Error('Please consent to the POPIA policy');
-      const { error: insertError } = await supabase.from('dealer_enquiries').insert([formData]);
-      if (insertError) throw insertError;
+      const { error: insertError } = await supabase.from('dealer_enquiries').insert([{
+        dealership_name: formData.dealership_name,
+        contact_person: formData.contact_person,
+        role_title: formData.role_title,
+        phone: formData.phone,
+        email: formData.email,
+        city: formData.city,
+        province: formData.province,
+        vehicle_types: formData.vehicle_types,
+        brands_stocked: formData.brands_stocked,
+        message: formData.message,
+        popia_consent: formData.popia_consent,
+      }]);
+      if (insertError) throw new Error(insertError.message || 'Failed to submit. Please try again.');
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');

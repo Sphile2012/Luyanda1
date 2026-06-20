@@ -53,8 +53,19 @@ const BecomeAgent = () => {
     setError('');
     try {
       if (!formData.popia_consent) throw new Error('Please consent to the POPIA policy');
-      const { error: insertError } = await supabase.from('applications').insert([formData]);
-      if (insertError) throw insertError;
+      const { error: insertError } = await supabase.from('applications').insert([{
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        province: formData.province,
+        motivation: formData.motivation,
+        how_heard: formData.how_heard,
+        popia_consent: formData.popia_consent,
+        id_number: '',
+      }]);
+      if (insertError) throw new Error(insertError.message || 'Failed to submit. Please try again.');
       // Send confirmation email (non-blocking)
       fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',

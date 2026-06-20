@@ -99,6 +99,9 @@ CREATE POLICY "insert_dealer_enquiries" ON public.dealer_enquiries FOR INSERT TO
 DROP POLICY IF EXISTS "select_dealer_enquiries" ON public.dealer_enquiries;
 CREATE POLICY "select_dealer_enquiries" ON public.dealer_enquiries FOR SELECT TO authenticated USING (is_management());
 
+DROP POLICY IF EXISTS "update_dealer_enquiries" ON public.dealer_enquiries;
+CREATE POLICY "update_dealer_enquiries" ON public.dealer_enquiries FOR UPDATE TO authenticated USING (is_management());
+
 -- ── 4. BUYER LEADS ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.buyer_leads (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

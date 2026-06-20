@@ -75,8 +75,16 @@ const Home = () => {
     setBuyerLoading(true);
     setBuyerError('');
     try {
-      const { error } = await supabase.from('buyer_leads').insert([buyerData]);
-      if (error) throw error;
+      const { error } = await supabase.from('buyer_leads').insert([{
+        first_name: buyerData.first_name,
+        last_name: buyerData.last_name,
+        phone: buyerData.phone,
+        email: buyerData.email,
+        car_type: buyerData.car_type,
+        employment_status: buyerData.employment_status,
+        popia_consent: buyerData.popia_consent,
+      }]);
+      if (error) throw new Error(error.message || 'Failed to submit. Please try again.');
       // Send confirmation email (non-blocking)
       fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',
@@ -104,8 +112,19 @@ const Home = () => {
     setAgentLoading(true);
     setAgentError('');
     try {
-      const { error } = await supabase.from('applications').insert([agentData]);
-      if (error) throw error;
+      const { error } = await supabase.from('applications').insert([{
+        first_name: agentData.first_name,
+        last_name: agentData.last_name,
+        email: agentData.email,
+        phone: agentData.phone,
+        city: agentData.city,
+        province: agentData.province,
+        motivation: agentData.motivation,
+        how_heard: agentData.how_heard,
+        popia_consent: agentData.popia_consent,
+        id_number: '',
+      }]);
+      if (error) throw new Error(error.message || 'Failed to submit. Please try again.');
       // Send confirmation email (non-blocking)
       fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',
