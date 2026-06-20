@@ -1,19 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// Use env vars if set, otherwise fall back to the project defaults
+export const supabaseUrl =
+  (import.meta.env.VITE_SUPABASE_URL as string) ||
+  'https://cjvsjvdxqokjznsasdxz.supabase.co';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    '[Drive Agency] Missing Supabase environment variables.\n' +
-    'Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your Netlify environment variables.'
-  );
-}
+export const supabaseAnonKey =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqdnNqdmR4cW9ranpuc2FzZHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODQ2MzQsImV4cCI6MjA2NTU2MDYzNH0.placeholder';
 
-export const supabase = createClient(
-  supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type Profile = {
   id: string;
