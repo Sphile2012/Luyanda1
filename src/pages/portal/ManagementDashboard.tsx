@@ -210,7 +210,11 @@ const ManagementDashboard = () => {
       // Confirm the agent's email so they can sign in without email-verification errors
       fetch(`${supabaseUrl}/functions/v1/confirm-agent`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'apikey': supabaseAnonKey,
+        },
         body: JSON.stringify({ user_id: selectedPendingAgent.id }),
       }).catch(() => {});
       // Send approval email

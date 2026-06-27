@@ -91,10 +91,9 @@ const PortalEntry = () => {
         if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')) {
           setError('Cannot connect to the server. Please check your internet connection and try again.');
         } else if (msg.toLowerCase().includes('email not confirmed')) {
-          // Show a more helpful message — email can be confirmed by running the management migration
           setError(
-            'Your email has not been confirmed. If you are management, please run the confirmation SQL migration in your Supabase dashboard. ' +
-            'If you are an agent, please wait for management to activate your account.'
+            'Your email is not yet confirmed. Please wait for management to activate your account. ' +
+            'If you believe this is a mistake, contact management directly.'
           );
         } else if (
           msg.toLowerCase().includes('invalid login') ||
@@ -224,22 +223,36 @@ const PortalEntry = () => {
         return;
       }
 
-      // Save security questions (hashed answers) — non-fatal if fails
+      // Save security questions (hashed answers) — retry with a short delay to allow
+      // the email auto-confirm trigger to run before the session is established
       try {
         const [hash1, hash2] = await Promise.all([hashAnswer(secA1), hashAnswer(secA2)]);
-        await supabase.from('security_questions').insert({
+        // Small delay to let the DB trigger settle
+        await new Promise(res => setTimeout(res, 500));
+        const { error: sqError } = await supabase.from('security_questions').insert({
           user_id: data.user.id,
           question_1: secQ1,
           answer_1_hash: hash1,
           question_2: secQ2,
           answer_2_hash: hash2,
         });
+        // If insert fails due to auth state, try once more after a longer delay
+        if (sqError) {
+          await new Promise(res => setTimeout(res, 1500));
+          await supabase.from('security_questions').insert({
+            user_id: data.user.id,
+            question_1: secQ1,
+            answer_1_hash: hash1,
+            question_2: secQ2,
+            answer_2_hash: hash2,
+          });
+        }
       } catch {
-        // Non-fatal: security questions save failed
+        // Non-fatal: security questions save failed, agent can still sign in
       }
 
       setLoading(false);
-      setSuccess('Account created successfully! Your application is pending review by management. You will be notified by email once your account is activated.');
+      setSuccess('Account created! Your account is pending review by management. You will be notified by email once activated.');
       resetFields();
       setAuthMode('signin');
     } catch (err: unknown) {
