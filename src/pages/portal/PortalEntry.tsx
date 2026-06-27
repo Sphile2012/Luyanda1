@@ -213,7 +213,15 @@ const PortalEntry = () => {
 
       if (signUpError) {
         console.error('[SignUp] Supabase error:', signUpError);
-        const msg = (signUpError.message || signUpError.name || '').trim();
+        // Extract message from Supabase error — handles both old JWT and new sb_publishable_ key formats
+        const msg = (
+          signUpError.message ||
+          (signUpError as unknown as { error_description?: string }).error_description ||
+          (signUpError as unknown as { msg?: string }).msg ||
+          signUpError.name ||
+          ''
+        ).trim();
+
         if (
           msg.toLowerCase().includes('already registered') ||
           msg.toLowerCase().includes('already exists') ||
@@ -223,10 +231,21 @@ const PortalEntry = () => {
           setError('An account with this email already exists. Please sign in instead.');
         } else if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')) {
           setError('Cannot connect to the server. Please check your internet connection and try again.');
+        } else if (msg.toLowerCase().includes('signup') && msg.toLowerCase().includes('disabled')) {
+          setError('Account registration is currently disabled. Please contact management.');
         } else if (msg) {
           setError(msg);
         } else {
-          setError('Could not create account. Please try again.');
+          // Last resort: try to get something useful from the raw error
+          try {
+            const raw = JSON.stringify(signUpError, Object.getOwnPropertyNames(signUpError));
+            console.error('[SignUp] Raw error JSON:', raw);
+            const parsed = JSON.parse(raw);
+            const rawMsg = parsed.message || parsed.error_description || parsed.msg || parsed.code || '';
+            setError(rawMsg || 'Could not create account. Please try again.');
+          } catch {
+            setError('Could not create account. Please try again.');
+          }
         }
         setLoading(false);
         return;
