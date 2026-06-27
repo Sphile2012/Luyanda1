@@ -93,8 +93,17 @@ const PortalEntry = () => {
         if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')) {
           setError('Cannot connect to the server. Please check your internet connection and try again.');
         } else if (msg.toLowerCase().includes('email not confirmed')) {
-          setError('Your email address has not been confirmed yet. Please contact management to activate your account.');
-        } else if (msg.toLowerCase().includes('invalid login') || msg.toLowerCase().includes('invalid credentials') || msg.toLowerCase().includes('wrong password')) {
+          // Show a more helpful message — email can be confirmed by running the management migration
+          setError(
+            'Your email has not been confirmed. If you are management, please run the confirmation SQL migration in your Supabase dashboard. ' +
+            'If you are an agent, please wait for management to activate your account.'
+          );
+        } else if (
+          msg.toLowerCase().includes('invalid login') ||
+          msg.toLowerCase().includes('invalid credentials') ||
+          msg.toLowerCase().includes('wrong password') ||
+          msg.toLowerCase().includes('invalid email or password')
+        ) {
           setError('Invalid email or password. Please check your details and try again.');
         } else if (msg.toLowerCase().includes('too many requests') || msg.toLowerCase().includes('rate limit')) {
           setError('Too many login attempts. Please wait a few minutes before trying again.');
@@ -130,14 +139,17 @@ const PortalEntry = () => {
 
     let { role, status, error: profileError } = await fetchRole();
 
-    // Profile may not exist yet if trigger was slow — retry once
+    // Profile may not exist yet if trigger was slow — retry twice
     if (!role && !profileError) {
       await new Promise(res => setTimeout(res, 1500));
       ({ role, status, error: profileError } = await fetchRole());
     }
+    if (!role && !profileError) {
+      await new Promise(res => setTimeout(res, 2000));
+      ({ role, status, error: profileError } = await fetchRole());
+    }
 
     setLoading(false);
-
     if (profileError) {
       setError(`Sign-in error: ${profileError.message}`);
       return;
