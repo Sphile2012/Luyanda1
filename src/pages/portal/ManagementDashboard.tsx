@@ -116,12 +116,12 @@ const ManagementDashboard = () => {
   // Agent approve modal
   const [showApproveAgentModal, setShowApproveAgentModal] = useState(false);
   const [selectedPendingAgent, setSelectedPendingAgent] = useState<Profile | null>(null);
-  const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('remote_agent');
+  const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('management');
 
   // Change role modal (for existing active agents)
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
   const [agentForRoleChange, setAgentForRoleChange] = useState<Profile | null>(null);
-  const [newRoleForAgent, setNewRoleForAgent] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('remote_agent');
+  const [newRoleForAgent, setNewRoleForAgent] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('management');
   const [changingRole, setChangingRole] = useState(false);
 
   // Remove agent modal
@@ -1459,8 +1459,6 @@ const ManagementDashboard = () => {
               <div>
                 <label className="label">Assign Role</label>
                 <select value={approveAgentRole} onChange={(e) => setApproveAgentRole(e.target.value as 'remote_agent' | 'inoffice_agent' | 'management')} className="input-field">
-                  <option value="remote_agent">Remote Agent</option>
-                  <option value="inoffice_agent">In-Office Agent</option>
                   <option value="management">Management</option>
                 </select>
               </div>
@@ -1546,11 +1544,9 @@ const ManagementDashboard = () => {
 
               <div>
                 <label className="label">Assign New Role</label>
-                <div className="grid grid-cols-3 gap-2 mt-1">
+                <div className="grid grid-cols-1 gap-2 mt-1">
                   {([
-                    { value: 'remote_agent', label: 'Remote Agent', desc: 'Works from home' },
-                    { value: 'inoffice_agent', label: 'In-Office Agent', desc: 'Works on-site' },
-                    { value: 'management', label: 'Management', desc: 'Full admin access' },
+                    { value: 'management', label: 'Management', desc: 'Full dashboard & admin access' },
                   ] as const).map(({ value, label, desc }) => (
                     <button
                       key={value}
@@ -1558,13 +1554,11 @@ const ManagementDashboard = () => {
                       onClick={() => setNewRoleForAgent(value)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         newRoleForAgent === value
-                          ? value === 'management'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-brand-500 bg-brand-50'
+                          ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-gray-300 bg-white'
                       }`}
                     >
-                      <p className={`text-xs font-bold ${newRoleForAgent === value ? value === 'management' ? 'text-purple-700' : 'text-brand-700' : 'text-gray-700'}`}>
+                      <p className={`text-xs font-bold ${newRoleForAgent === value ? 'text-purple-700' : 'text-gray-700'}`}>
                         {label}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
@@ -1575,7 +1569,7 @@ const ManagementDashboard = () => {
 
               {newRoleForAgent === 'management' && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                  <strong>Warning:</strong> Assigning Management gives this person full admin access to all data, agents, and settings.
+                  <strong>Note:</strong> Management role gives full admin access to all data, agents, and settings.
                 </div>
               )}
 
