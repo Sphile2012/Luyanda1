@@ -197,6 +197,13 @@ const PortalEntry = () => {
 
     setLoading(true);
 
+    // Sanity check: make sure Supabase is configured
+    if (!supabase) {
+      setError('Service not available. Please try again later.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
@@ -205,7 +212,8 @@ const PortalEntry = () => {
       });
 
       if (signUpError) {
-        const msg = signUpError.message || signUpError.name || '';
+        console.error('[SignUp] Supabase error:', signUpError);
+        const msg = (signUpError.message || signUpError.name || '').trim();
         if (
           msg.toLowerCase().includes('already registered') ||
           msg.toLowerCase().includes('already exists') ||
@@ -215,8 +223,10 @@ const PortalEntry = () => {
           setError('An account with this email already exists. Please sign in instead.');
         } else if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')) {
           setError('Cannot connect to the server. Please check your internet connection and try again.');
+        } else if (msg) {
+          setError(msg);
         } else {
-          setError(msg || 'Could not create account. Please try again.');
+          setError('Could not create account. Please try again.');
         }
         setLoading(false);
         return;
@@ -263,6 +273,7 @@ const PortalEntry = () => {
       resetFields();
       setAuthMode('signin');
     } catch (err: unknown) {
+      console.error('[SignUp] Unexpected error:', err);
       let msg = 'An unexpected error occurred. Please try again.';
       if (err instanceof Error) {
         msg = err.message || msg;
@@ -373,7 +384,7 @@ const PortalEntry = () => {
                     </button>
                   </div>
                 </div>
-                {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>}
+                {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{String(error)}</div>}
                 <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
                   {loading ? 'Signing in…' : <><LogIn className="w-4 h-4" /> Sign In</>}
                 </button>
@@ -454,7 +465,7 @@ const PortalEntry = () => {
                   </div>
                 </div>
 
-                {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>}
+                {error && <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{String(error)}</div>}
                 <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
                   {loading ? 'Creating account…' : <><UserPlus className="w-4 h-4" /> Create Account</>}
                 </button>
