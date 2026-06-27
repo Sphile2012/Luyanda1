@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Eye, EyeOff, LogIn, UserPlus, Shield, User, LogOut, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UserPlus, ShieldCheck, LogOut } from 'lucide-react';
 
-type LoginTab = 'agent' | 'management';
 type AuthMode = 'signin' | 'signup';
 
 const SECURITY_QUESTIONS = [
@@ -29,7 +28,6 @@ async function hashAnswer(answer: string): Promise<string> {
 }
 
 const PortalEntry = () => {
-  const [loginTab, setLoginTab] = useState<LoginTab>('agent');
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
 
   const [email, setEmail] = useState('');
@@ -162,15 +160,25 @@ const PortalEntry = () => {
     }
 
     if (role === 'management' || role === 'admin') {
+      // Only management/admin can access the management dashboard
       navigate('/management-dashboard');
-    } else if ((role === 'remote_agent' || role === 'inoffice_agent') && status === 'active') {
-      navigate('/agent-dashboard');
-    } else if ((role === 'remote_agent' || role === 'inoffice_agent') && status !== 'active') {
+    } else if (role === 'remote_agent' || role === 'inoffice_agent') {
+      // Agents always go to agent dashboard, regardless of which tab they clicked
+      if (status === 'active') {
+        navigate('/agent-dashboard');
+      } else if (status === 'suspended' || status === 'inactive') {
+        await supabase.auth.signOut();
+        setError('Your account has been suspended. Please contact management.');
+      } else {
+        await supabase.auth.signOut();
+        setError('Your account is pending approval by management. You will be notified once activated.');
+      }
+    } else if (role === 'pending') {
       await supabase.auth.signOut();
-      setError('Your account has been suspended. Please contact management.');
+      setError('Your account is pending approval by management. You will be notified by email once activated.');
     } else {
       await supabase.auth.signOut();
-      setError('Your account is pending approval by management. You will be notified once activated.');
+      setError('Your account does not have access. Please contact management.');
     }
   };
 
@@ -296,24 +304,7 @@ const PortalEntry = () => {
           </div>
 
           <div className="p-6">
-            {/* Sign in sub-tabs */}
-            {authMode === 'signin' && (
-              <div className="flex gap-2 mb-5">
-                <button
-                  onClick={() => setLoginTab('agent')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${loginTab === 'agent' ? 'bg-brand-50 text-brand-600 border border-brand-200' : 'text-gray-500 border border-gray-200 hover:bg-gray-50'}`}
-                >
-                  <User className="w-4 h-4" /> Agent
-                </button>
-                <button
-                  onClick={() => setLoginTab('management')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${loginTab === 'management' ? 'bg-brand-50 text-brand-600 border border-brand-200' : 'text-gray-500 border border-gray-200 hover:bg-gray-50'}`}
-                >
-                  <Shield className="w-4 h-4" /> Management
-                </button>
-              </div>
-            )}
-
+            {/* SIGN IN FORM */}
             {authMode === 'signup' && (
               <div className="mb-5 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
                 New agent accounts are reviewed by management before activation. You'll be notified by email.

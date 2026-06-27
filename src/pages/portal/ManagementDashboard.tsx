@@ -7,7 +7,7 @@ import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
   Upload, ChartBar as BarChart3, Download, Trash2, Image, DollarSign, UserCheck, UserX,
   ClipboardList, MessageSquare, Send, Plus, X, AlertCircle, Clock, CheckSquare, Briefcase,
-  FolderOpen, ShoppingCart, MapPin,
+  FolderOpen, ShoppingCart, MapPin, RefreshCw,
 } from 'lucide-react';
 
 type Tab = 'overview' | 'tasks' | 'messages' | 'agents' | 'applications' | 'sales' | 'agent_docs' | 'clients' | 'inventory' | 'reports' | 'photos' | 'job_postings';
@@ -116,7 +116,13 @@ const ManagementDashboard = () => {
   // Agent approve modal
   const [showApproveAgentModal, setShowApproveAgentModal] = useState(false);
   const [selectedPendingAgent, setSelectedPendingAgent] = useState<Profile | null>(null);
-  const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent'>('remote_agent');
+  const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('remote_agent');
+
+  // Change role modal (for existing active agents)
+  const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
+  const [agentForRoleChange, setAgentForRoleChange] = useState<Profile | null>(null);
+  const [newRoleForAgent, setNewRoleForAgent] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('remote_agent');
+  const [changingRole, setChangingRole] = useState(false);
 
   // Remove agent modal
   const [showRemoveAgentModal, setShowRemoveAgentModal] = useState(false);
@@ -218,6 +224,21 @@ const ManagementDashboard = () => {
       setShowApproveAgentModal(false);
       setSelectedPendingAgent(null);
     }
+  };
+
+  const changeAgentRole = async () => {
+    if (!agentForRoleChange) return;
+    setChangingRole(true);
+    const { error } = await supabase.from('profiles').update({
+      role: newRoleForAgent,
+      updated_at: new Date().toISOString(),
+    }).eq('id', agentForRoleChange.id);
+    if (!error) {
+      setAgents(agents.map(a => a.id === agentForRoleChange.id ? { ...a, role: newRoleForAgent } : a));
+      setShowChangeRoleModal(false);
+      setAgentForRoleChange(null);
+    }
+    setChangingRole(false);
   };
 
   const declineAgent = async (agentId: string) => {
@@ -909,14 +930,27 @@ const ManagementDashboard = () => {
                               </div>
                             </td>
                             <td className="px-4 py-4">
-                              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 capitalize">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
+                                agent.role === 'management' ? 'bg-purple-100 text-purple-700' : 'bg-brand-100 text-brand-700'
+                              }`}>
                                 {agent.role.replace(/_/g, ' ')}
                               </span>
                             </td>
                             <td className="px-4 py-4 text-sm font-medium text-navy-900">{approvedDeals}</td>
                             <td className="px-4 py-4 text-sm text-green-600 font-semibold">R {totalCommission.toLocaleString('en-ZA')}</td>
                             <td className="px-4 py-4">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <button
+                                  onClick={() => {
+                                    setAgentForRoleChange(agent);
+                                    setNewRoleForAgent(agent.role as 'remote_agent' | 'inoffice_agent' | 'management');
+                                    setShowChangeRoleModal(true);
+                                  }}
+                                  title="Change role"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 border border-brand-200 text-xs font-semibold hover:bg-brand-100 transition-colors"
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" /> Role
+                                </button>
                                 <button
                                   onClick={() => updateAgentStatus(agent.id, 'suspended')}
                                   title="Suspend agent"
@@ -1424,9 +1458,10 @@ const ManagementDashboard = () => {
               </div>
               <div>
                 <label className="label">Assign Role</label>
-                <select value={approveAgentRole} onChange={(e) => setApproveAgentRole(e.target.value as 'remote_agent' | 'inoffice_agent')} className="input-field">
+                <select value={approveAgentRole} onChange={(e) => setApproveAgentRole(e.target.value as 'remote_agent' | 'inoffice_agent' | 'management')} className="input-field">
                   <option value="remote_agent">Remote Agent</option>
                   <option value="inoffice_agent">In-Office Agent</option>
+                  <option value="management">Management</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
@@ -1475,6 +1510,86 @@ const ManagementDashboard = () => {
                 </button>
                 <button
                   onClick={() => { setShowRemoveAgentModal(false); setAgentToRemove(null); }}
+                  className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Change Role Modal ── */}
+      {showChangeRoleModal && agentForRoleChange && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-navy-900">Change Role</h3>
+              <button onClick={() => { setShowChangeRoleModal(false); setAgentForRoleChange(null); }} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-sm flex-shrink-0">
+                  {agentForRoleChange.full_name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div>
+                  <p className="font-semibold text-navy-900">{agentForRoleChange.full_name}</p>
+                  <p className="text-sm text-gray-500">{agentForRoleChange.email}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Current role: <span className="font-medium capitalize">{agentForRoleChange.role.replace(/_/g, ' ')}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Assign New Role</label>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  {([
+                    { value: 'remote_agent', label: 'Remote Agent', desc: 'Works from home' },
+                    { value: 'inoffice_agent', label: 'In-Office Agent', desc: 'Works on-site' },
+                    { value: 'management', label: 'Management', desc: 'Full admin access' },
+                  ] as const).map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setNewRoleForAgent(value)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        newRoleForAgent === value
+                          ? value === 'management'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-brand-500 bg-brand-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <p className={`text-xs font-bold ${newRoleForAgent === value ? value === 'management' ? 'text-purple-700' : 'text-brand-700' : 'text-gray-700'}`}>
+                        {label}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {newRoleForAgent === 'management' && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                  <strong>Warning:</strong> Assigning Management gives this person full admin access to all data, agents, and settings.
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={changeAgentRole}
+                  disabled={changingRole || newRoleForAgent === agentForRoleChange.role}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 disabled:opacity-50 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {changingRole ? 'Updating…' : 'Update Role'}
+                </button>
+                <button
+                  onClick={() => { setShowChangeRoleModal(false); setAgentForRoleChange(null); }}
                   className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
