@@ -7,10 +7,10 @@ import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
   Eye, MapPin, DollarSign, ChartBar as BarChart3, ListFilter as Filter,
   Clock, Target, Award, Building, Folder, ClipboardList, MessageSquare, AlertCircle, CheckSquare,
-  Upload, FolderOpen, CheckCircle2, ShoppingCart, X,
+  Upload, FolderOpen, CheckCircle2, ShoppingCart, X, Plus, FileCheck,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'tasks' | 'messages' | 'inventory' | 'applications' | 'leads' | 'clients' | 'my_sales' | 'client_folder' | 'commission' | 'reports' | 'management' | 'my_documents';
+type Tab = 'overview' | 'tasks' | 'messages' | 'inventory' | 'applications' | 'leads' | 'clients' | 'apply_client' | 'my_sales' | 'client_folder' | 'commission' | 'reports' | 'management' | 'my_documents';
 
 const priorityColors: Record<string, string> = {
   low: 'bg-gray-100 text-gray-700',
@@ -74,6 +74,134 @@ const AgentDashboard = () => {
   const [clientApplicationType, setClientApplicationType] = useState<'rent' | 'own' | 'finance'>('finance');
   const [clientDocUploading, setClientDocUploading] = useState(false);
   const [clientDocError, setClientDocError] = useState<string | null>(null);
+
+  // ── Apply Client tab state ──────────────────────────────────────────
+  type ApplicationType = 'finance' | 'rental';
+  type ApplyStep = 'type' | 'details' | 'documents' | 'review';
+
+  const [applyStep, setApplyStep] = useState<ApplyStep>('type');
+  const [applyType, setApplyType] = useState<ApplicationType>('finance');
+  const [applyClientId, setApplyClientId] = useState<string>('');          // existing client or new
+  const [applyNewClient, setApplyNewClient] = useState({
+    first_name: '', last_name: '', phone: '', email: '',
+    id_number: '', occupation: '', province: '',
+    vehicle_brand: '', vehicle_model: '', vehicle_colour: '',
+    budget_range: '', vehicle_condition: 'either' as 'new' | 'used' | 'either',
+    finance_needed: true, notes: '',
+  });
+  const [applyDocs, setApplyDocs] = useState<
+    Array<{ docType: ClientDocument['document_type']; file: File; label: string }>
+  >([]);
+  const [applySubmitting, setApplySubmitting] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [applySuccess, setApplySuccess] = useState(false);
+
+  const FINANCE_DOCS: Array<{ type: ClientDocument['document_type']; label: string; required: boolean }> = [
+    { type: 'id_document',       label: 'SA ID Document',         required: true },
+    { type: 'proof_of_income',   label: 'Proof of Income / Payslip', required: true },
+    { type: 'proof_of_address',  label: 'Proof of Address',        required: true },
+    { type: 'bank_statement',    label: 'Bank Statement (3 months)', required: true },
+    { type: 'drivers_license',   label: "Driver's License",        required: false },
+    { type: 'client_photo',      label: 'Client Photo',            required: false },
+  ];
+
+  const RENTAL_DOCS: Array<{ type: ClientDocument['document_type']; label: string; required: boolean }> = [
+    { type: 'id_document',       label: 'SA ID Document',         required: true },
+    { type: 'proof_of_income',   label: 'Proof of Income / Payslip', required: true },
+    { type: 'proof_of_address',  label: 'Proof of Address',        required: true },
+    { type: 'bank_statement',    label: 'Bank Statement (3 months)', required: false },
+    { type: 'client_photo',      label: 'Client Photo',            required: false },
+  ];
+
+  const currentDocList = applyType === 'finance' ? FINANCE_DOCS : RENTAL_DOCS;
+
+  const resetApply = () => {
+    setApplyStep('type');
+    setApplyType('finance');
+    setApplyClientId('');
+    setApplyNewClient({ first_name: '', last_name: '', phone: '', email: '', id_number: '', occupation: '', province: '', vehicle_brand: '', vehicle_model: '', vehicle_colour: '', budget_range: '', vehicle_condition: 'either', finance_needed: true, notes: '' });
+    setApplyDocs([]);
+    setApplyError(null);
+    setApplySuccess(false);
+  };
+
+  const handleApplyDocFile = (docType: ClientDocument['document_type'], label: string, file: File | null) => {
+    if (!file) {
+      setApplyDocs(prev => prev.filter(d => d.docType !== docType));
+      return;
+    }
+    setApplyDocs(prev => {
+      const filtered = prev.filter(d => d.docType !== docType);
+      return [...filtered, { docType, file, label }];
+    });
+  };
+
+  const handleApplySubmit = async () => {
+    if (!user) return;
+    setApplySubmitting(true);
+    setApplyError(null);
+
+    try {
+      // 1. Create the client record
+      const clientPayload = {
+        ...applyNewClient,
+        agent_id: user.id,
+        status: 'pending' as const,
+        finance_needed: applyType === 'finance',
+        notes: applyNewClient.notes || `Application type: ${applyType}`,
+      };
+      const { data: newClient, error: clientError } = await supabase
+        .from('clients')
+        .insert([clientPayload])
+        .select()
+        .single();
+
+      if (clientError || !newClient) {
+        setApplyError(clientError?.message || 'Failed to create client. Please try again.');
+        setApplySubmitting(false);
+        return;
+      }
+
+      // 2. Upload each document
+      for (const doc of applyDocs) {
+        const ext = doc.file.name.split('.').pop();
+        const filePath = `${newClient.id}/${doc.docType}-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from('client_documents')
+          .upload(filePath, doc.file);
+        if (uploadErr) continue; // non-fatal — don't block the whole submission
+
+        await supabase.from('client_documents').insert({
+          client_id: newClient.id,
+          uploaded_by: user.id,
+          document_type: doc.docType,
+          application_type: applyType === 'finance' ? 'finance' : 'rent',
+          file_name: doc.file.name,
+          file_path: filePath,
+          file_size: doc.file.size,
+          mime_type: doc.file.type,
+          description: `${doc.label} — ${applyType}`,
+        });
+      }
+
+      // 3. Send confirmation email if client has email
+      if (applyNewClient.email) {
+        fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}`, 'apikey': supabaseAnonKey },
+          body: JSON.stringify({ type: 'client_signup', to: applyNewClient.email, name: applyNewClient.first_name }),
+        }).catch(() => {});
+      }
+
+      await fetchData(isManagement);
+      setApplySuccess(true);
+      setApplyStep('review');
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
+    } finally {
+      setApplySubmitting(false);
+    }
+  };
 
   const isManagement = profile?.role === 'management' || profile?.role === 'admin';
 
@@ -333,6 +461,7 @@ const AgentDashboard = () => {
     { id: 'applications', label: 'Applications', icon: FileText },
     { id: 'leads', label: 'Leads', icon: Users },
     { id: 'clients', label: 'My Clients', icon: Users },
+    { id: 'apply_client', label: 'Apply for Client', icon: FileCheck },
     { id: 'my_sales', label: 'My Sales', icon: ShoppingCart },
     { id: 'client_folder', label: 'Client Folder', icon: Folder },
     { id: 'commission', label: 'Commission Tracker', icon: DollarSign },
@@ -792,6 +921,380 @@ const AgentDashboard = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ── Apply for Client ── */}
+        {activeTab === 'apply_client' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">Apply for Client</h2>
+                <p className="text-gray-500 text-sm mt-0.5">Submit a finance or rental application on behalf of a client</p>
+              </div>
+              {(applyStep !== 'type' && !applySuccess) && (
+                <button onClick={resetApply} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-600">
+                  Start Over
+                </button>
+              )}
+            </div>
+
+            {/* Progress bar */}
+            {!applySuccess && (
+              <div className="flex items-center gap-2">
+                {(['type', 'details', 'documents', 'review'] as ApplyStep[]).map((step, i) => {
+                  const stepLabels: Record<ApplyStep, string> = { type: 'Application Type', details: 'Client Details', documents: 'Documents', review: 'Review & Submit' };
+                  const stepIdx = ['type', 'details', 'documents', 'review'].indexOf(applyStep);
+                  const done = i < stepIdx;
+                  const active = step === applyStep;
+                  return (
+                    <div key={step} className="flex items-center gap-2 flex-1">
+                      <div className={`flex items-center gap-2 flex-1 ${i > 0 ? 'pl-2' : ''}`}>
+                        {i > 0 && <div className={`h-0.5 flex-1 ${done || active ? 'bg-brand-500' : 'bg-gray-200'}`} />}
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                          done ? 'bg-brand-500 text-white' : active ? 'bg-brand-500 text-white ring-4 ring-brand-100' : 'bg-gray-200 text-gray-500'
+                        }`}>
+                          {done ? '✓' : i + 1}
+                        </div>
+                        <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-brand-600' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+                          {stepLabels[step]}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── Step 1: Application Type ── */}
+            {applyStep === 'type' && (
+              <div className="max-w-2xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {([
+                    {
+                      value: 'finance' as ApplicationType,
+                      label: 'Vehicle Finance',
+                      desc: 'Client wants to purchase a vehicle through a bank or financial institution.',
+                      icon: DollarSign,
+                      color: 'brand',
+                      docs: ['SA ID', 'Payslip', 'Bank Statements', 'Proof of Address'],
+                    },
+                    {
+                      value: 'rental' as ApplicationType,
+                      label: 'Vehicle Rental',
+                      desc: 'Client wants to rent a vehicle on a monthly or fixed-term basis.',
+                      icon: Car,
+                      color: 'purple',
+                      docs: ['SA ID', 'Payslip', 'Proof of Address'],
+                    },
+                  ]).map(({ value, label, desc, icon: Icon, color, docs }) => (
+                    <button
+                      key={value}
+                      onClick={() => setApplyType(value)}
+                      className={`p-6 rounded-2xl border-2 text-left transition-all hover:shadow-md ${
+                        applyType === value
+                          ? color === 'brand' ? 'border-brand-500 bg-brand-50' : 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center ${
+                        applyType === value
+                          ? color === 'brand' ? 'bg-brand-500' : 'bg-purple-500'
+                          : 'bg-gray-100'
+                      }`}>
+                        <Icon className={`w-6 h-6 ${applyType === value ? 'text-white' : 'text-gray-500'}`} />
+                      </div>
+                      <p className={`text-lg font-bold mb-1 ${applyType === value ? (color === 'brand' ? 'text-brand-700' : 'text-purple-700') : 'text-navy-900'}`}>{label}</p>
+                      <p className="text-sm text-gray-500 mb-4">{desc}</p>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 mb-2">Required documents:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {docs.map(d => (
+                            <span key={d} className="px-2 py-0.5 bg-white border border-gray-200 text-xs text-gray-600 rounded-full">{d}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setApplyStep('details')}
+                  className="mt-6 inline-flex items-center gap-2 px-8 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition-colors"
+                >
+                  Continue with {applyType === 'finance' ? 'Finance' : 'Rental'} →
+                </button>
+              </div>
+            )}
+
+            {/* ── Step 2: Client Details ── */}
+            {applyStep === 'details' && (
+              <div className="max-w-3xl bg-white rounded-2xl shadow-sm p-6">
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-6 ${applyType === 'finance' ? 'bg-brand-100 text-brand-700' : 'bg-purple-100 text-purple-700'}`}>
+                  {applyType === 'finance' ? <DollarSign className="w-4 h-4" /> : <Car className="w-4 h-4" />}
+                  {applyType === 'finance' ? 'Vehicle Finance Application' : 'Vehicle Rental Application'}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">First Name *</label>
+                    <input className="input-field" placeholder="John" value={applyNewClient.first_name} onChange={e => setApplyNewClient(p => ({ ...p, first_name: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <label className="label">Last Name *</label>
+                    <input className="input-field" placeholder="Doe" value={applyNewClient.last_name} onChange={e => setApplyNewClient(p => ({ ...p, last_name: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <label className="label">Phone Number *</label>
+                    <input className="input-field" placeholder="071 234 5678" value={applyNewClient.phone} onChange={e => setApplyNewClient(p => ({ ...p, phone: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <label className="label">Email Address</label>
+                    <input className="input-field" type="email" placeholder="john@example.com" value={applyNewClient.email} onChange={e => setApplyNewClient(p => ({ ...p, email: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">SA ID Number *</label>
+                    <input className="input-field" placeholder="9001015009087" value={applyNewClient.id_number} onChange={e => setApplyNewClient(p => ({ ...p, id_number: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <label className="label">Occupation</label>
+                    <input className="input-field" placeholder="e.g. Teacher" value={applyNewClient.occupation} onChange={e => setApplyNewClient(p => ({ ...p, occupation: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Province *</label>
+                    <select className="input-field" value={applyNewClient.province} onChange={e => setApplyNewClient(p => ({ ...p, province: e.target.value }))}>
+                      <option value="">Select province</option>
+                      {['Gauteng','Western Cape','KwaZulu-Natal','Limpopo','Mpumalanga','North West','Northern Cape','Eastern Cape','Free State'].map(prov => (
+                        <option key={prov} value={prov.toLowerCase().replace(/ /g,'_')}>{prov}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Budget Range *</label>
+                    <select className="input-field" value={applyNewClient.budget_range} onChange={e => setApplyNewClient(p => ({ ...p, budget_range: e.target.value }))}>
+                      <option value="">Select range</option>
+                      {['Under R100k','R100k – R200k','R200k – R350k','R350k – R500k','R500k – R800k','R800k+'].map(r => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Vehicle Brand</label>
+                    <input className="input-field" placeholder="e.g. Toyota" value={applyNewClient.vehicle_brand} onChange={e => setApplyNewClient(p => ({ ...p, vehicle_brand: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Vehicle Model</label>
+                    <input className="input-field" placeholder="e.g. Corolla" value={applyNewClient.vehicle_model} onChange={e => setApplyNewClient(p => ({ ...p, vehicle_model: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Preferred Colour</label>
+                    <input className="input-field" placeholder="e.g. White" value={applyNewClient.vehicle_colour} onChange={e => setApplyNewClient(p => ({ ...p, vehicle_colour: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">Condition Preference</label>
+                    <select className="input-field" value={applyNewClient.vehicle_condition} onChange={e => setApplyNewClient(p => ({ ...p, vehicle_condition: e.target.value as 'new'|'used'|'either' }))}>
+                      <option value="either">Either</option>
+                      <option value="new">New</option>
+                      <option value="used">Used</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label">Additional Notes</label>
+                    <textarea className="input-field" rows={3} placeholder="Any extra details about this application…" value={applyNewClient.notes} onChange={e => setApplyNewClient(p => ({ ...p, notes: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button onClick={() => setApplyStep('type')} className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-colors">← Back</button>
+                  <button
+                    onClick={() => {
+                      if (!applyNewClient.first_name || !applyNewClient.last_name || !applyNewClient.phone || !applyNewClient.id_number || !applyNewClient.province || !applyNewClient.budget_range) {
+                        setApplyError('Please fill in all required fields (*).');
+                        return;
+                      }
+                      setApplyError(null);
+                      setApplyStep('documents');
+                    }}
+                    className="px-8 py-2.5 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition-colors"
+                  >
+                    Continue to Documents →
+                  </button>
+                </div>
+                {applyError && <p className="mt-3 text-sm text-red-600">{applyError}</p>}
+              </div>
+            )}
+
+            {/* ── Step 3: Documents ── */}
+            {applyStep === 'documents' && (
+              <div className="max-w-3xl">
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-6 ${applyType === 'finance' ? 'bg-brand-100 text-brand-700' : 'bg-purple-100 text-purple-700'}`}>
+                  {applyType === 'finance' ? <DollarSign className="w-4 h-4" /> : <Car className="w-4 h-4" />}
+                  {applyType === 'finance' ? 'Finance Documents' : 'Rental Documents'} — {applyNewClient.first_name} {applyNewClient.last_name}
+                </div>
+
+                <div className="space-y-3">
+                  {currentDocList.map(({ type, label, required }) => {
+                    const uploaded = applyDocs.find(d => d.docType === type);
+                    return (
+                      <div key={type} className={`bg-white rounded-xl p-4 border-2 transition-all ${uploaded ? 'border-green-400' : required ? 'border-dashed border-gray-300' : 'border-dashed border-gray-200'}`}>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${uploaded ? 'bg-green-100' : 'bg-gray-100'}`}>
+                              {uploaded ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <FileText className="w-5 h-5 text-gray-400" />}
+                            </div>
+                            <div>
+                              <p className="font-medium text-navy-900 text-sm">
+                                {label}
+                                {required && <span className="text-red-500 ml-1">*</span>}
+                              </p>
+                              {uploaded
+                                ? <p className="text-xs text-green-600 mt-0.5">✓ {uploaded.file.name} ({(uploaded.file.size / 1024).toFixed(0)} KB)</p>
+                                : <p className="text-xs text-gray-400 mt-0.5">{required ? 'Required' : 'Optional'} · PDF, JPG, PNG</p>
+                              }
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <label className={`cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                              uploaded
+                                ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+                                : 'bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200'
+                            }`}>
+                              <Upload className="w-3.5 h-3.5" />
+                              {uploaded ? 'Replace' : 'Upload'}
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                className="hidden"
+                                onChange={e => handleApplyDocFile(type, label, e.target.files?.[0] ?? null)}
+                              />
+                            </label>
+                            {uploaded && (
+                              <button onClick={() => handleApplyDocFile(type, label, null)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 transition-colors" title="Remove">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
+                  <strong>Tip:</strong> Upload at least all required (*) documents. You can still submit without optional documents and add them later via Client Folder.
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button onClick={() => setApplyStep('details')} className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-colors">← Back</button>
+                  <button
+                    onClick={() => {
+                      const missingRequired = currentDocList.filter(d => d.required && !applyDocs.find(u => u.docType === d.type));
+                      if (missingRequired.length > 0) {
+                        setApplyError(`Please upload the following required documents: ${missingRequired.map(d => d.label).join(', ')}`);
+                        return;
+                      }
+                      setApplyError(null);
+                      setApplyStep('review');
+                    }}
+                    className="px-8 py-2.5 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition-colors"
+                  >
+                    Review Application →
+                  </button>
+                </div>
+                {applyError && <p className="mt-3 text-sm text-red-600">{applyError}</p>}
+              </div>
+            )}
+
+            {/* ── Step 4: Review & Submit ── */}
+            {applyStep === 'review' && !applySuccess && (
+              <div className="max-w-3xl space-y-4">
+                <div className={`p-4 rounded-xl flex items-center gap-3 font-semibold text-sm ${applyType === 'finance' ? 'bg-brand-50 text-brand-700 border border-brand-200' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
+                  {applyType === 'finance' ? <DollarSign className="w-5 h-5" /> : <Car className="w-5 h-5" />}
+                  Application Type: {applyType === 'finance' ? 'Vehicle Finance' : 'Vehicle Rental'}
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm p-6">
+                  <h3 className="font-bold text-navy-900 mb-4">Client Details</h3>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    {[
+                      ['Name', `${applyNewClient.first_name} ${applyNewClient.last_name}`],
+                      ['Phone', applyNewClient.phone],
+                      ['Email', applyNewClient.email || '—'],
+                      ['ID Number', applyNewClient.id_number],
+                      ['Occupation', applyNewClient.occupation || '—'],
+                      ['Province', applyNewClient.province],
+                      ['Budget', applyNewClient.budget_range],
+                      ['Vehicle', `${applyNewClient.vehicle_brand} ${applyNewClient.vehicle_model}`.trim() || '—'],
+                      ['Colour', applyNewClient.vehicle_colour || '—'],
+                      ['Condition', applyNewClient.vehicle_condition],
+                    ].map(([key, val]) => (
+                      <div key={key} className="flex gap-2">
+                        <span className="text-gray-500 w-28 flex-shrink-0">{key}</span>
+                        <span className="font-medium text-navy-900">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm p-6">
+                  <h3 className="font-bold text-navy-900 mb-4">Documents ({applyDocs.length})</h3>
+                  {applyDocs.length === 0
+                    ? <p className="text-sm text-gray-400">No documents attached.</p>
+                    : (
+                      <div className="space-y-2">
+                        {applyDocs.map(d => (
+                          <div key={d.docType} className="flex items-center gap-3 p-2.5 bg-green-50 rounded-lg">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span className="text-sm font-medium text-navy-900">{d.label}</span>
+                            <span className="text-xs text-gray-500 ml-auto">{d.file.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  }
+                </div>
+
+                {applyError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{applyError}</div>
+                )}
+
+                <div className="flex gap-3">
+                  <button onClick={() => setApplyStep('documents')} className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-colors">← Back</button>
+                  <button
+                    onClick={handleApplySubmit}
+                    disabled={applySubmitting}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  >
+                    {applySubmitting ? (
+                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting…</>
+                    ) : (
+                      <><FileCheck className="w-5 h-5" /> Submit Application</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Success ── */}
+            {applySuccess && (
+              <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-sm p-10 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-navy-900 mb-2">Application Submitted!</h3>
+                <p className="text-gray-500 mb-2">
+                  The {applyType === 'finance' ? 'finance' : 'rental'} application for <strong>{applyNewClient.first_name} {applyNewClient.last_name}</strong> has been submitted.
+                </p>
+                <p className="text-sm text-gray-400 mb-8">Management will review it and update the status. You can track it under <strong>My Clients</strong>.</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button onClick={resetApply} className="px-6 py-2.5 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition-colors">
+                    Submit Another
+                  </button>
+                  <button onClick={() => switchTab('clients')} className="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                    View My Clients
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
