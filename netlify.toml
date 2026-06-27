@@ -6,3 +6,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
+
+[build.environment]
+  VITE_SUPABASE_URL = "https://cjvsjvdxqokjznsasdxz.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "sb_publishable_XhSRn97gCu5iwZYCkADlcg_-tySeOsW"
