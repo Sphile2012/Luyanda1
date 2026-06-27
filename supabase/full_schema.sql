@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS public.client_documents (
     'id_document','proof_of_income','proof_of_address','drivers_license',
     'bank_statement','client_photo','payslip','other'
   )),
+  application_type text CHECK (application_type IN ('rent','own','finance')),
   file_name text NOT NULL,
   file_path text NOT NULL,
   file_size integer,
@@ -255,6 +256,47 @@ DROP POLICY IF EXISTS "insert_client_docs" ON public.client_documents;
 CREATE POLICY "insert_client_docs" ON public.client_documents FOR INSERT TO authenticated WITH CHECK (
   is_management() OR EXISTS (SELECT 1 FROM clients WHERE clients.id = client_id AND clients.agent_id = auth.uid())
 );
+
+DROP POLICY IF EXISTS "delete_client_docs" ON public.client_documents;
+CREATE POLICY "delete_client_docs" ON public.client_documents FOR DELETE TO authenticated USING (
+  is_management() OR EXISTS (SELECT 1 FROM clients WHERE clients.id = client_id AND clients.agent_id = auth.uid())
+);
+
+-- Storage policies for client_documents bucket
+DROP POLICY IF EXISTS "agents_upload_client_docs" ON storage.objects;
+CREATE POLICY "agents_upload_client_docs" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'client_documents'
+    AND (
+      is_management()
+      OR EXISTS (
+        SELECT 1 FROM public.clients
+        WHERE clients.id::text = (storage.foldername(name))[1]
+          AND clients.agent_id = auth.uid()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "agents_read_client_docs" ON storage.objects;
+CREATE POLICY "agents_read_client_docs" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'client_documents'
+    AND (
+      is_management()
+      OR EXISTS (
+        SELECT 1 FROM public.clients
+        WHERE clients.id::text = (storage.foldername(name))[1]
+          AND clients.agent_id = auth.uid()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "management_delete_client_docs" ON storage.objects;
+CREATE POLICY "management_delete_client_docs" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'client_documents' AND is_management());
 
 -- ── 9. AGENT DOCUMENTS ───────────────────────────────────────
 INSERT INTO storage.buckets (id, name, public) VALUES ('agent_documents','agent_documents',false) ON CONFLICT DO NOTHING;
@@ -282,6 +324,37 @@ CREATE POLICY "agent_docs_insert" ON public.agent_documents FOR INSERT TO authen
 
 DROP POLICY IF EXISTS "agent_docs_delete" ON public.agent_documents;
 CREATE POLICY "agent_docs_delete" ON public.agent_documents FOR DELETE TO authenticated USING (agent_id = auth.uid() OR is_management());
+
+-- Storage policies for agent_documents bucket
+DROP POLICY IF EXISTS "agents_upload_own_docs" ON storage.objects;
+CREATE POLICY "agents_upload_own_docs" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'agent_documents'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+DROP POLICY IF EXISTS "agents_read_own_docs" ON storage.objects;
+CREATE POLICY "agents_read_own_docs" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'agent_documents'
+    AND (
+      (storage.foldername(name))[1] = auth.uid()::text
+      OR is_management()
+    )
+  );
+
+DROP POLICY IF EXISTS "agents_delete_own_docs" ON storage.objects;
+CREATE POLICY "agents_delete_own_docs" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'agent_documents'
+    AND (
+      (storage.foldername(name))[1] = auth.uid()::text
+      OR is_management()
+    )
+  );
 
 -- ── 10. TASKS ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.tasks (

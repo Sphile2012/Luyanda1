@@ -294,6 +294,7 @@ const ManagementDashboard = () => {
     if (uploadError) { alert('Error uploading file: ' + uploadError.message); return; }
     const { error: dbError } = await supabase.from('client_documents').insert({
       client_id: selectedClient.id, uploaded_by: user?.id, document_type: 'client_photo',
+      application_type: null,
       file_name: uploadFile.name, file_path: filePath, file_size: uploadFile.size,
       mime_type: uploadFile.type, description: 'Client photo uploaded by management',
     });

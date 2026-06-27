@@ -7,7 +7,7 @@ import {
   Car, Users, FileText, TrendingUp, LogOut, Search, CircleCheck as CheckCircle,
   Eye, MapPin, DollarSign, ChartBar as BarChart3, ListFilter as Filter,
   Clock, Target, Award, Building, Folder, ClipboardList, MessageSquare, AlertCircle, CheckSquare,
-  Upload, FolderOpen, CheckCircle2, ShoppingCart, TrendingUp as SalesIcon,
+  Upload, FolderOpen, CheckCircle2, ShoppingCart, X,
 } from 'lucide-react';
 
 type Tab = 'overview' | 'tasks' | 'messages' | 'inventory' | 'applications' | 'leads' | 'clients' | 'my_sales' | 'client_folder' | 'commission' | 'reports' | 'management' | 'my_documents';
@@ -66,16 +66,25 @@ const AgentDashboard = () => {
   const [docUploading, setDocUploading] = useState<string | null>(null);
   const [docError, setDocError] = useState<string | null>(null);
 
+  // Client document upload state
+  const [showClientDocModal, setShowClientDocModal] = useState(false);
+  const [clientDocClient, setClientDocClient] = useState<Client | null>(null);
+  const [clientDocFile, setClientDocFile] = useState<File | null>(null);
+  const [clientDocType, setClientDocType] = useState<ClientDocument['document_type']>('id_document');
+  const [clientApplicationType, setClientApplicationType] = useState<'rent' | 'own' | 'finance'>('finance');
+  const [clientDocUploading, setClientDocUploading] = useState(false);
+  const [clientDocError, setClientDocError] = useState<string | null>(null);
+
   const isManagement = profile?.role === 'management' || profile?.role === 'admin';
 
   useEffect(() => {
     if (authLoading) return;
     if (!user || !profile) { navigate('/portal'); return; }
     if (!['remote_agent', 'inoffice_agent', 'management', 'admin'].includes(profile.role)) { navigate('/portal'); return; }
-    fetchData();
+    fetchData(profile.role === 'management' || profile.role === 'admin');
   }, [user, profile, authLoading, navigate]);
 
-  const fetchData = async () => {
+  const fetchData = async (isMgmt: boolean) => {
     setLoading(true);
 
     const { data: vehiclesData } = await supabase.from('vehicles').select('*').eq('is_active', true).order('created_at', { ascending: false });
@@ -83,7 +92,7 @@ const AgentDashboard = () => {
     const { data: tasksData } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
     const { data: messagesData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
 
-    if (isManagement) {
+    if (isMgmt) {
       const [{ data: applicationsData }, { data: clientsData }, { data: leadsData }, { data: agentsData }, { data: documentsData }] = await Promise.all([
         supabase.from('applications').select('*').order('created_at', { ascending: false }),
         supabase.from('clients').select('*').order('created_at', { ascending: false }),
@@ -148,7 +157,7 @@ const AgentDashboard = () => {
         body: JSON.stringify({ type: 'client_signup', to: addClientForm.email, name: addClientForm.first_name }),
       }).catch(() => {});
     }
-    await fetchData();
+    await fetchData(isManagement);
     setShowAddClientModal(false);
     setAddClientForm({ first_name: '', last_name: '', phone: '', email: '', occupation: '', province: '', vehicle_condition: 'either', vehicle_brand: '', vehicle_model: '', vehicle_colour: '', budget_range: '', finance_needed: true, notes: '' });
     setAddClientLoading(false);
@@ -160,7 +169,7 @@ const AgentDashboard = () => {
     setAddLeadError('');
     const { error } = await supabase.from('buyer_leads').insert([{ ...addLeadForm, assigned_agent_id: user?.id, status: 'new', popia_consent: true }]);
     if (error) { setAddLeadError(error.message); setAddLeadLoading(false); return; }
-    await fetchData();
+    await fetchData(isManagement);
     setShowAddLeadModal(false);
     setAddLeadForm({ first_name: '', last_name: '', phone: '', email: '', car_type: '', employment_status: '' });
     setAddLeadLoading(false);
@@ -229,6 +238,51 @@ const AgentDashboard = () => {
   const getSignedDocUrl = async (filePath: string) => {
     const { data } = await supabase.storage.from('agent_documents').createSignedUrl(filePath, 60);
     if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  };
+
+  const handleClientDocUpload = async () => {
+    if (!clientDocFile || !clientDocClient || !user) return;
+    setClientDocUploading(true);
+    setClientDocError(null);
+
+    const fileExt = clientDocFile.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${clientDocClient.id}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('client_documents')
+      .upload(filePath, clientDocFile);
+
+    if (uploadError) {
+      setClientDocError('Upload failed: ' + uploadError.message);
+      setClientDocUploading(false);
+      return;
+    }
+
+    const { error: dbError } = await supabase.from('client_documents').insert({
+      client_id: clientDocClient.id,
+      uploaded_by: user.id,
+      document_type: clientDocType,
+      application_type: clientApplicationType,
+      file_name: clientDocFile.name,
+      file_path: filePath,
+      file_size: clientDocFile.size,
+      mime_type: clientDocFile.type,
+      description: `${clientDocType.replace(/_/g, ' ')} — ${clientApplicationType}`,
+    });
+
+    if (dbError) {
+      setClientDocError('Failed to save document record: ' + dbError.message);
+      setClientDocUploading(false);
+      return;
+    }
+
+    await fetchData(isManagement);
+    setShowClientDocModal(false);
+    setClientDocFile(null);
+    setClientDocType('id_document');
+    setClientApplicationType('finance');
+    setClientDocUploading(false);
   };
 
   const getStats = () => {
@@ -879,7 +933,10 @@ const AgentDashboard = () => {
               ))}
             </div>
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-200"><h3 className="text-lg font-semibold text-navy-900">Client Documents</h3></div>
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-navy-900">Client Documents</h3>
+                <p className="text-xs text-gray-400">Click "Upload Doc" to attach documents to a client</p>
+              </div>
               <div className="divide-y divide-gray-100">
                 {clients.map((client) => {
                   const clientDocs = documents.filter(d => d.client_id === client.id);
@@ -890,18 +947,39 @@ const AgentDashboard = () => {
                           <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">{client.first_name?.charAt(0)}</div>
                           <div><p className="font-medium text-navy-900">{client.first_name} {client.last_name}</p><p className="text-sm text-gray-500">{client.phone}</p></div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${client.status === 'approved' ? 'bg-green-100 text-green-700' : client.status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{client.status}</span>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${client.status === 'approved' ? 'bg-green-100 text-green-700' : client.status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{client.status}</span>
+                          <button
+                            onClick={() => { setClientDocClient(client); setShowClientDocModal(true); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600 transition-colors"
+                          >
+                            <Upload className="w-3.5 h-3.5" /> Upload Doc
+                          </button>
+                        </div>
                       </div>
                       {clientDocs.length > 0 ? (
                         <div className="flex flex-wrap gap-2 mt-3">
-                          {clientDocs.map((doc) => (
-                            <span key={doc.id} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"><Folder className="w-3 h-3" />{doc.document_type.replace(/_/g, ' ')}</span>
-                          ))}
+                          {clientDocs.map((doc) => {
+                            const appType = doc.application_type;
+                            return (
+                              <span key={doc.id} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                                <Folder className="w-3 h-3" />
+                                {doc.document_type.replace(/_/g, ' ')}
+                                {appType && <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-semibold ${appType === 'finance' ? 'bg-blue-100 text-blue-700' : appType === 'rent' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>{appType}</span>}
+                              </span>
+                            );
+                          })}
                         </div>
                       ) : <p className="text-xs text-gray-400 mt-2">No documents uploaded</p>}
                     </div>
                   );
                 })}
+                {clients.length === 0 && (
+                  <div className="p-12 text-center text-gray-400">
+                    <Folder className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>No clients yet. Add a client to get started.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1065,6 +1143,7 @@ const AgentDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {([
                 { type: 'id_document' as const, label: 'SA ID Document', required: true },
+                { type: 'drivers_license' as const, label: "Driver's License", required: true },
               ] as Array<{ type: AgentDocument['document_type']; label: string; required: boolean }>).map(({ type, label, required }) => {
                 const uploaded = agentDocs.find(d => d.document_type === type && !d.month_label);
                 const isLoading = docUploading === type;
@@ -1115,6 +1194,56 @@ const AgentDashboard = () => {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Bank Statements — 3 months required */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-navy-900">Bank Statements</h3>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Required · 3 months</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <span>{agentDocs.filter(d => d.document_type === 'bank_statement').length}</span>
+                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-500">3 uploaded</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(['Month 1', 'Month 2', 'Month 3'] as const).map((month) => {
+                  const uploaded = agentDocs.find(d => d.document_type === 'bank_statement' && d.month_label === month);
+                  const isLoading = docUploading === `bank_statement-${month}`;
+                  return (
+                    <div key={month} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-medium text-navy-900">{month}</p>
+                        {uploaded ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <span className="w-4 h-4 rounded-full border-2 border-red-200 block"></span>}
+                      </div>
+                      {uploaded && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-600 truncate">{uploaded.file_name}</p>
+                          <button onClick={() => getSignedDocUrl(uploaded.file_path)} className="text-xs text-brand-600 hover:text-brand-700 font-medium underline">View</button>
+                        </div>
+                      )}
+                      <label className={`flex items-center justify-center gap-1 w-full px-3 py-2 rounded-lg border border-dashed cursor-pointer text-xs transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 hover:bg-gray-50'}`}>
+                        <Upload className="w-3 h-3 text-gray-500" />
+                        <span className="text-gray-600 font-medium">{isLoading ? 'Uploading…' : uploaded ? 'Replace' : 'Upload'}</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                          disabled={isLoading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadAgentDoc('bank_statement', month, f);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Payslips — 3 months optional */}
@@ -1296,8 +1425,7 @@ const AgentDashboard = () => {
       )}
 
       {/* ── Add Client Modal ── */}
-      {showAddClientModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      {showAddClientModal && (        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-navy-900 mb-4">Add New Client</h3>
             <form onSubmit={handleAddClient} className="space-y-4">
@@ -1376,6 +1504,112 @@ const AgentDashboard = () => {
                 <button type="submit" disabled={addClientLoading} className="flex-1 btn-primary disabled:opacity-50">{addClientLoading ? 'Saving...' : 'Add Client'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Upload Client Document Modal ── */}
+      {showClientDocModal && clientDocClient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-navy-900">Upload Client Document</h3>
+              <button onClick={() => { setShowClientDocModal(false); setClientDocFile(null); setClientDocError(null); }} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Client info */}
+            <div className="bg-gray-50 rounded-lg p-3 mb-5">
+              <p className="font-medium text-navy-900">{clientDocClient.first_name} {clientDocClient.last_name}</p>
+              <p className="text-sm text-gray-500">{clientDocClient.phone}</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Application Type — Rent / Own / Finance */}
+              <div>
+                <label className="label">Application Type <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'rent', label: 'Rent', color: 'purple' },
+                    { value: 'own', label: 'Own', color: 'green' },
+                    { value: 'finance', label: 'Finance', color: 'blue' },
+                  ] as const).map(({ value, label, color }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setClientApplicationType(value)}
+                      className={`py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${
+                        clientApplicationType === value
+                          ? color === 'purple' ? 'border-purple-500 bg-purple-50 text-purple-700'
+                            : color === 'green' ? 'border-green-500 bg-green-50 text-green-700'
+                            : 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Document Type */}
+              <div>
+                <label className="label">Document Type <span className="text-red-500">*</span></label>
+                <select
+                  value={clientDocType}
+                  onChange={(e) => setClientDocType(e.target.value as ClientDocument['document_type'])}
+                  className="input-field"
+                >
+                  <option value="id_document">SA ID Document</option>
+                  <option value="proof_of_income">Proof of Income</option>
+                  <option value="proof_of_address">Proof of Address</option>
+                  <option value="drivers_license">Driver's License</option>
+                  <option value="bank_statement">Bank Statement</option>
+                  <option value="payslip">Payslip</option>
+                  <option value="client_photo">Client Photo</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {/* File Upload */}
+              <div>
+                <label className="label">Select File <span className="text-red-500">*</span></label>
+                <label className={`flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${clientDocFile ? 'border-green-400 bg-green-50' : 'border-brand-300 hover:border-brand-400 hover:bg-brand-50'}`}>
+                  <Upload className={`w-4 h-4 ${clientDocFile ? 'text-green-600' : 'text-brand-500'}`} />
+                  <span className={`text-sm font-medium ${clientDocFile ? 'text-green-700' : 'text-brand-600'}`}>
+                    {clientDocFile ? clientDocFile.name : 'Choose file (PDF, JPG, PNG)'}
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => { setClientDocFile(e.target.files?.[0] || null); setClientDocError(null); }}
+                  />
+                </label>
+              </div>
+
+              {clientDocError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{clientDocError}</div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={handleClientDocUpload}
+                  disabled={clientDocUploading || !clientDocFile}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-600 disabled:opacity-50 transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  {clientDocUploading ? 'Uploading…' : 'Upload Document'}
+                </button>
+                <button
+                  onClick={() => { setShowClientDocModal(false); setClientDocFile(null); setClientDocError(null); }}
+                  className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

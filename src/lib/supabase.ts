@@ -1,15 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Use env vars if set, otherwise fall back to the project defaults
-export const supabaseUrl =
-  (import.meta.env.VITE_SUPABASE_URL as string) ||
-  'https://cjvsjvdxqokjznsasdxz.supabase.co';
+export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-export const supabaseAnonKey =
-  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqdnNqdmR4cW9ranpuc2FzZHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODQ2MzQsImV4cCI6MjA2NTU2MDYzNH0.placeholder';
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    '[Drive Agency] Missing Supabase env vars. ' +
+    'Create a .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  );
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || '',
+  supabaseAnonKey || ''
+);
 
 export type Profile = {
   id: string;
@@ -122,7 +126,8 @@ export type ClientDocument = {
   id: string;
   client_id: string;
   uploaded_by: string;
-  document_type: 'id_document' | 'proof_of_income' | 'proof_of_address' | 'drivers_license' | 'bank_statement' | 'client_photo' | 'other';
+  document_type: 'id_document' | 'proof_of_income' | 'proof_of_address' | 'drivers_license' | 'bank_statement' | 'client_photo' | 'payslip' | 'other';
+  application_type: 'rent' | 'own' | 'finance' | null;
   file_name: string;
   file_path: string;
   file_size: number;

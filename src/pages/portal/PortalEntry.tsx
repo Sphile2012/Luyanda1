@@ -87,22 +87,26 @@ const PortalEntry = () => {
 
     let data: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data'] | null = null;
     try {
-      const res = await supabase.auth.signInWithPassword({ email, password });
+      const res = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
       if (res.error) {
         const msg = res.error.message || '';
-        if (msg === 'Failed to fetch') {
-          setError('Cannot connect to the server. Please try again shortly.');
+        if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')) {
+          setError('Cannot connect to the server. Please check your internet connection and try again.');
         } else if (msg.toLowerCase().includes('email not confirmed')) {
           setError('Your email address has not been confirmed yet. Please contact management to activate your account.');
-        } else {
+        } else if (msg.toLowerCase().includes('invalid login') || msg.toLowerCase().includes('invalid credentials') || msg.toLowerCase().includes('wrong password')) {
           setError('Invalid email or password. Please check your details and try again.');
+        } else if (msg.toLowerCase().includes('too many requests') || msg.toLowerCase().includes('rate limit')) {
+          setError('Too many login attempts. Please wait a few minutes before trying again.');
+        } else {
+          setError('Login failed: ' + msg);
         }
         setLoading(false);
         return;
       }
       data = res.data;
     } catch {
-      setError('Cannot connect to the server. Please try again shortly.');
+      setError('Cannot connect to the server. Please check your internet connection and try again.');
       setLoading(false);
       return;
     }
@@ -126,8 +130,9 @@ const PortalEntry = () => {
 
     let { role, status, error: profileError } = await fetchRole();
 
+    // Profile may not exist yet if trigger was slow — retry once
     if (!role && !profileError) {
-      await new Promise(res => setTimeout(res, 1200));
+      await new Promise(res => setTimeout(res, 1500));
       ({ role, status, error: profileError } = await fetchRole());
     }
 
@@ -135,6 +140,12 @@ const PortalEntry = () => {
 
     if (profileError) {
       setError(`Sign-in error: ${profileError.message}`);
+      return;
+    }
+
+    if (!role) {
+      setError('Your account profile was not found. Please contact management.');
+      await supabase.auth.signOut();
       return;
     }
 
@@ -156,6 +167,7 @@ const PortalEntry = () => {
     setError(null);
 
     if (!fullName.trim()) { setError('Please enter your full name.'); return; }
+    if (!email.trim()) { setError('Please enter your email address.'); return; }
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     if (!secQ1) { setError('Please select your first security question.'); return; }
@@ -168,13 +180,20 @@ const PortalEntry = () => {
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: { data: { full_name: fullName.trim() } },
       });
 
       if (signUpError) {
-        setError(signUpError.message || JSON.stringify(signUpError));
+        const msg = signUpError.message || '';
+        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('user already')) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else if (msg === 'Failed to fetch' || msg.includes('NetworkError')) {
+          setError('Cannot connect to the server. Please check your internet connection and try again.');
+        } else {
+          setError(msg || 'Could not create account. Please try again.');
+        }
         setLoading(false);
         return;
       }
@@ -185,7 +204,7 @@ const PortalEntry = () => {
         return;
       }
 
-      // Save security questions (hashed answers)
+      // Save security questions (hashed answers) — non-fatal if fails
       try {
         const [hash1, hash2] = await Promise.all([hashAnswer(secA1), hashAnswer(secA2)]);
         await supabase.from('security_questions').insert({
@@ -196,18 +215,20 @@ const PortalEntry = () => {
           answer_2_hash: hash2,
         });
       } catch {
-        // Non-fatal: security questions save failed, sign-in will still work
+        // Non-fatal: security questions save failed
       }
 
       setLoading(false);
-      setSuccess('Account created! Your application is pending review. Management will notify you once approved.');
+      setSuccess('Account created successfully! Your application is pending review by management. You will be notified by email once your account is activated.');
       resetFields();
       setAuthMode('signin');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg === 'Failed to fetch'
-        ? 'Cannot connect to the server. Please try again shortly.'
-        : 'Signup error: ' + msg);
+      setError(
+        msg === 'Failed to fetch' || msg.includes('NetworkError')
+          ? 'Cannot connect to the server. Please check your internet connection and try again.'
+          : 'Signup error: ' + msg
+      );
       setLoading(false);
     }
   };

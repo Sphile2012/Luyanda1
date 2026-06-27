@@ -21,6 +21,8 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.local
+.env*.local
 
 # Bolt.new (AI builder artifacts — not part of the project)
 .bolt/
