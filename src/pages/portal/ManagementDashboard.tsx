@@ -63,6 +63,14 @@ const DOC_LABELS: Record<string, string> = {
   payslip: 'Payslip',
 };
 
+const ROLE_LABELS: Record<string, string> = {
+  pending:       'Pending',
+  remote_agent:  'Remote Agent',
+  inoffice_agent:'Onsite Agent',
+  management:    'Management',
+  admin:         'Admin',
+};
+
 const ManagementDashboard = () => {
   const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -116,12 +124,12 @@ const ManagementDashboard = () => {
   // Agent approve modal
   const [showApproveAgentModal, setShowApproveAgentModal] = useState(false);
   const [selectedPendingAgent, setSelectedPendingAgent] = useState<Profile | null>(null);
-  const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('management');
+  const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('remote_agent');
 
   // Change role modal (for existing active agents)
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
   const [agentForRoleChange, setAgentForRoleChange] = useState<Profile | null>(null);
-  const [newRoleForAgent, setNewRoleForAgent] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('management');
+  const [newRoleForAgent, setNewRoleForAgent] = useState<'remote_agent' | 'inoffice_agent' | 'management'>('remote_agent');
   const [changingRole, setChangingRole] = useState(false);
 
   // Remove agent modal
@@ -588,7 +596,7 @@ const ManagementDashboard = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate text-sm">{profile?.full_name}</p>
-              <p className="text-xs text-gray-400 truncate">{profile?.role}</p>
+              <p className="text-xs text-gray-400 truncate">{ROLE_LABELS[profile?.role ?? ''] ?? profile?.role}</p>
             </div>
           </div>
           <button onClick={handleSignOut} className="w-full flex items-center gap-2 px-3 py-2 rounded bg-red-600 hover:bg-red-700 transition-colors text-sm">
@@ -937,7 +945,7 @@ const ManagementDashboard = () => {
                               <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
                                 agent.role === 'management' ? 'bg-purple-100 text-purple-700' : 'bg-brand-100 text-brand-700'
                               }`}>
-                                {agent.role.replace(/_/g, ' ')}
+                                {ROLE_LABELS[agent.role] ?? agent.role}
                               </span>
                             </td>
                             <td className="px-4 py-4 text-sm font-medium text-navy-900">{approvedDeals}</td>
@@ -1023,7 +1031,7 @@ const ManagementDashboard = () => {
                               </td>
                               <td className="px-4 py-4">
                                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 capitalize">
-                                  {agent.role.replace(/_/g, ' ')}
+                                  {ROLE_LABELS[agent.role] ?? agent.role}
                                 </span>
                               </td>
                               <td className="px-4 py-4 text-sm text-navy-900">{approvedDeals}</td>
@@ -1462,9 +1470,36 @@ const ManagementDashboard = () => {
               </div>
               <div>
                 <label className="label">Assign Role</label>
-                <select value={approveAgentRole} onChange={(e) => setApproveAgentRole(e.target.value as 'remote_agent' | 'inoffice_agent' | 'management')} className="input-field">
-                  <option value="management">Management</option>
-                </select>
+                <div className="grid grid-cols-1 gap-2 mt-1">
+                  {([
+                    { value: 'remote_agent',   label: 'Remote Agent',  desc: 'Works from home, handles clients digitally' },
+                    { value: 'inoffice_agent', label: 'Onsite Agent',  desc: 'Works from the office in person' },
+                    { value: 'management',     label: 'Management',    desc: 'Full dashboard & admin access' },
+                  ] as const).map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setApproveAgentRole(value)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        approveAgentRole === value
+                          ? value === 'management' ? 'border-purple-500 bg-purple-50' : 'border-brand-500 bg-brand-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <p className={`text-xs font-bold ${
+                        approveAgentRole === value
+                          ? value === 'management' ? 'text-purple-700' : 'text-brand-700'
+                          : 'text-gray-700'
+                      }`}>{label}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                    </button>
+                  ))}
+                </div>
+                {approveAgentRole === 'management' && (
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                    <strong>Note:</strong> Management role gives full admin access to all data, agents, and settings.
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={approveAgentWithRole} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
@@ -1541,7 +1576,7 @@ const ManagementDashboard = () => {
                   <p className="font-semibold text-navy-900">{agentForRoleChange.full_name}</p>
                   <p className="text-sm text-gray-500">{agentForRoleChange.email}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Current role: <span className="font-medium capitalize">{agentForRoleChange.role.replace(/_/g, ' ')}</span>
+                    Current role: <span className="font-medium">{ROLE_LABELS[agentForRoleChange.role] ?? agentForRoleChange.role}</span>
                   </p>
                 </div>
               </div>
@@ -1550,7 +1585,9 @@ const ManagementDashboard = () => {
                 <label className="label">Assign New Role</label>
                 <div className="grid grid-cols-1 gap-2 mt-1">
                   {([
-                    { value: 'management', label: 'Management', desc: 'Full dashboard & admin access' },
+                    { value: 'remote_agent',   label: 'Remote Agent',  desc: 'Works from home, handles clients digitally' },
+                    { value: 'inoffice_agent', label: 'Onsite Agent',  desc: 'Works from the office in person' },
+                    { value: 'management',     label: 'Management',    desc: 'Full dashboard & admin access' },
                   ] as const).map(({ value, label, desc }) => (
                     <button
                       key={value}
@@ -1558,24 +1595,25 @@ const ManagementDashboard = () => {
                       onClick={() => setNewRoleForAgent(value)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         newRoleForAgent === value
-                          ? 'border-purple-500 bg-purple-50'
+                          ? value === 'management' ? 'border-purple-500 bg-purple-50' : 'border-brand-500 bg-brand-50'
                           : 'border-gray-200 hover:border-gray-300 bg-white'
                       }`}
                     >
-                      <p className={`text-xs font-bold ${newRoleForAgent === value ? 'text-purple-700' : 'text-gray-700'}`}>
-                        {label}
-                      </p>
+                      <p className={`text-xs font-bold ${
+                        newRoleForAgent === value
+                          ? value === 'management' ? 'text-purple-700' : 'text-brand-700'
+                          : 'text-gray-700'
+                      }`}>{label}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
                     </button>
                   ))}
                 </div>
+                {newRoleForAgent === 'management' && (
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                    <strong>Note:</strong> Management role gives full admin access to all data, agents, and settings.
+                  </div>
+                )}
               </div>
-
-              {newRoleForAgent === 'management' && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                  <strong>Note:</strong> Management role gives full admin access to all data, agents, and settings.
-                </div>
-              )}
 
               <div className="flex gap-3 pt-1">
                 <button
