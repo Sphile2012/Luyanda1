@@ -205,10 +205,15 @@ const PortalEntry = () => {
       });
 
       if (signUpError) {
-        const msg = signUpError.message || '';
-        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('user already')) {
+        const msg = signUpError.message || signUpError.name || '';
+        if (
+          msg.toLowerCase().includes('already registered') ||
+          msg.toLowerCase().includes('already exists') ||
+          msg.toLowerCase().includes('user already') ||
+          msg.toLowerCase().includes('email address is already')
+        ) {
           setError('An account with this email already exists. Please sign in instead.');
-        } else if (msg === 'Failed to fetch' || msg.includes('NetworkError')) {
+        } else if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')) {
           setError('Cannot connect to the server. Please check your internet connection and try again.');
         } else {
           setError(msg || 'Could not create account. Please try again.');
@@ -217,8 +222,10 @@ const PortalEntry = () => {
         return;
       }
 
-      if (!data.user) {
-        setError('Could not create account. Please try again.');
+      // Supabase silently "succeeds" for already-registered emails when email confirm is off
+      // — detect this by checking for empty identities array
+      if (!data.user || (data.user.identities && data.user.identities.length === 0)) {
+        setError('An account with this email already exists. Please sign in instead.');
         setLoading(false);
         return;
       }
@@ -256,11 +263,26 @@ const PortalEntry = () => {
       resetFields();
       setAuthMode('signin');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      let msg = 'An unexpected error occurred. Please try again.';
+      if (err instanceof Error) {
+        msg = err.message || msg;
+      } else if (typeof err === 'string') {
+        msg = err;
+      } else if (err && typeof err === 'object') {
+        // Handle Supabase AuthError and other objects with a message property
+        const errObj = err as Record<string, unknown>;
+        if (typeof errObj.message === 'string' && errObj.message) {
+          msg = errObj.message;
+        } else if (typeof errObj.error_description === 'string') {
+          msg = errObj.error_description;
+        }
+      }
       setError(
-        msg === 'Failed to fetch' || msg.includes('NetworkError')
+        msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('fetch')
           ? 'Cannot connect to the server. Please check your internet connection and try again.'
-          : 'Signup error: ' + msg
+          : msg.includes('{}') || msg === 'Signup error: {}'
+          ? 'Could not create account. Please try again.'
+          : msg
       );
       setLoading(false);
     }
