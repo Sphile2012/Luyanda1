@@ -118,6 +118,10 @@ const ManagementDashboard = () => {
   const [selectedPendingAgent, setSelectedPendingAgent] = useState<Profile | null>(null);
   const [approveAgentRole, setApproveAgentRole] = useState<'remote_agent' | 'inoffice_agent'>('remote_agent');
 
+  // Remove agent modal
+  const [showRemoveAgentModal, setShowRemoveAgentModal] = useState(false);
+  const [agentToRemove, setAgentToRemove] = useState<Profile | null>(null);
+
   // Agent docs viewer
   const [selectedDocAgent, setSelectedDocAgent] = useState<Profile | null>(null);
 
@@ -176,9 +180,17 @@ const ManagementDashboard = () => {
   const handleSignOut = async () => { await signOut(); navigate('/'); };
 
   // Agent management
-  const updateAgentStatus = async (agentId: string, status: 'active' | 'inactive') => {
+  const updateAgentStatus = async (agentId: string, status: 'active' | 'inactive' | 'suspended') => {
     const { error } = await supabase.from('profiles').update({ status, updated_at: new Date().toISOString() }).eq('id', agentId);
     if (!error) setAgents(agents.map(a => a.id === agentId ? { ...a, status } : a));
+  };
+
+  const reinstateAgent = async (agentId: string) => {
+    const { error } = await supabase.from('profiles').update({
+      status: 'active',
+      updated_at: new Date().toISOString(),
+    }).eq('id', agentId);
+    if (!error) setAgents(agents.map(a => a.id === agentId ? { ...a, status: 'active' } : a));
   };
 
   const approveAgentWithRole = async () => {
@@ -209,16 +221,22 @@ const ManagementDashboard = () => {
   };
 
   const declineAgent = async (agentId: string) => {
-    if (confirm('Decline this agent application? Their account will be removed.')) {
-      const { error } = await supabase.from('profiles').delete().eq('id', agentId);
-      if (!error) setAgents(agents.filter(a => a.id !== agentId));
-    }
+    setAgentToRemove(agents.find(a => a.id === agentId) || null);
+    setShowRemoveAgentModal(true);
   };
 
   const deleteAgent = async (agentId: string) => {
-    if (confirm('Delete this agent? This cannot be undone.')) {
-      const { error } = await supabase.from('profiles').delete().eq('id', agentId);
-      if (!error) setAgents(agents.filter(a => a.id !== agentId));
+    setAgentToRemove(agents.find(a => a.id === agentId) || null);
+    setShowRemoveAgentModal(true);
+  };
+
+  const removeAgentConfirmed = async () => {
+    if (!agentToRemove) return;
+    const { error } = await supabase.from('profiles').delete().eq('id', agentToRemove.id);
+    if (!error) {
+      setAgents(agents.filter(a => a.id !== agentToRemove.id));
+      setShowRemoveAgentModal(false);
+      setAgentToRemove(null);
     }
   };
 
@@ -792,12 +810,31 @@ const ManagementDashboard = () => {
         {/* ── Agents ── */}
         {activeTab === 'agents' && (
           <div className="space-y-6">
-            {/* Pending Approval Section */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">Agent Management</h2>
+                <p className="text-gray-500 text-sm mt-0.5">Approve, suspend, reinstate and remove agents</p>
+              </div>
+              <div className="flex gap-3">
+                {[
+                  { label: 'Pending', value: pendingAgents.length, color: 'text-amber-600' },
+                  { label: 'Active', value: agents.filter(a => a.status === 'active' && a.role !== 'pending').length, color: 'text-green-600' },
+                  { label: 'Suspended', value: agents.filter(a => a.status === 'suspended' || a.status === 'inactive').length, color: 'text-red-600' },
+                ].map((s, i) => (
+                  <div key={i} className="bg-white rounded-lg px-4 py-2 shadow-sm text-center min-w-[80px]">
+                    <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                    <p className="text-xs text-gray-500">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Pending Approval ── */}
             {pendingAgents.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-amber-200 bg-amber-50 flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-lg font-semibold text-amber-900">Pending Approval ({pendingAgents.length})</h3>
+                  <h3 className="text-base font-semibold text-amber-900">Pending Approval ({pendingAgents.length})</h3>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {pendingAgents.filter(a =>
@@ -806,7 +843,9 @@ const ManagementDashboard = () => {
                   ).map((agent) => (
                     <div key={agent.id} className="p-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold">{agent.full_name?.charAt(0) || '?'}</div>
+                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">
+                          {agent.full_name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
                         <div>
                           <p className="font-medium text-navy-900">{agent.full_name}</p>
                           <p className="text-sm text-gray-500">{agent.email}</p>
@@ -815,12 +854,15 @@ const ManagementDashboard = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => { setSelectedPendingAgent(agent); setShowApproveAgentModal(true); }}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                          onClick={() => { setSelectedPendingAgent(agent); setApproveAgentRole('remote_agent'); setShowApproveAgentModal(true); }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
                         >
                           <UserCheck className="w-4 h-4" /> Approve
                         </button>
-                        <button onClick={() => declineAgent(agent.id)} className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors">
+                        <button
+                          onClick={() => declineAgent(agent.id)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
+                        >
                           <UserX className="w-4 h-4" /> Decline
                         </button>
                       </div>
@@ -830,44 +872,149 @@ const ManagementDashboard = () => {
               </div>
             )}
 
-            {/* Active Agents */}
+            {/* ── Active Agents ── */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-200"><h3 className="text-lg font-semibold text-navy-900">Active Agents ({activeAgentList.length})</h3></div>
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-navy-900">
+                  Active Agents ({agents.filter(a => ['remote_agent','inoffice_agent','management'].includes(a.role) && a.status === 'active').length})
+                </h3>
+                <span className="text-xs text-gray-400">Active and able to log in</span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>{['Agent', 'Role', 'Status', 'Deals', 'Open Tasks', 'Actions'].map(h => <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>)}</tr>
+                    <tr>
+                      {['Agent', 'Role', 'Deals', 'Commission', 'Actions'].map(h => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                      ))}
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {filteredAgents.filter(a => ['remote_agent', 'inoffice_agent', 'management'].includes(a.role)).map((agent) => {
-                      const approvedDeals = clients.filter(c => c.agent_id === agent.id && c.status === 'approved').length;
-                      const openTasks = tasks.filter(t => t.assigned_to === agent.id && t.status !== 'completed' && t.status !== 'cancelled').length;
-                      return (
-                        <tr key={agent.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">{agent.full_name?.charAt(0) || '?'}</div>
-                              <div><p className="font-medium text-navy-900">{agent.full_name}</p><p className="text-sm text-gray-500">{agent.email}</p></div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4"><span className="px-3 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-700">{agent.role}</span></td>
-                          <td className="px-4 py-4"><span className={`px-3 py-1 rounded-full text-xs font-medium ${agent.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{agent.status}</span></td>
-                          <td className="px-4 py-4 text-navy-900 font-medium">{approvedDeals}</td>
-                          <td className="px-4 py-4 text-navy-900">{openTasks}</td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              {agent.status !== 'active' && <button onClick={() => { setSelectedPendingAgent(agent); setShowApproveAgentModal(true); }} className="p-2 rounded hover:bg-green-100 text-green-600" title="Activate"><UserCheck className="w-4 h-4" /></button>}
-                              {agent.status === 'active' && <button onClick={() => updateAgentStatus(agent.id, 'inactive')} className="p-2 rounded hover:bg-yellow-100 text-yellow-600" title="Deactivate"><UserX className="w-4 h-4" /></button>}
-                              <button onClick={() => deleteAgent(agent.id)} className="p-2 rounded hover:bg-red-100 text-red-600" title="Delete"><X className="w-4 h-4" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredAgents
+                      .filter(a => ['remote_agent','inoffice_agent','management'].includes(a.role) && a.status === 'active')
+                      .map((agent) => {
+                        const approvedDeals = clients.filter(c => c.agent_id === agent.id && c.status === 'approved').length;
+                        const totalCommission = clients.filter(c => c.agent_id === agent.id && c.status === 'approved').reduce((s, c) => s + (c.commission_amount || 0), 0);
+                        return (
+                          <tr key={agent.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
+                                  {agent.full_name?.charAt(0)?.toUpperCase() || '?'}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-navy-900 text-sm">{agent.full_name}</p>
+                                  <p className="text-xs text-gray-500">{agent.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 capitalize">
+                                {agent.role.replace(/_/g, ' ')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-sm font-medium text-navy-900">{approvedDeals}</td>
+                            <td className="px-4 py-4 text-sm text-green-600 font-semibold">R {totalCommission.toLocaleString('en-ZA')}</td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => updateAgentStatus(agent.id, 'suspended')}
+                                  title="Suspend agent"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 text-xs font-semibold hover:bg-orange-100 transition-colors"
+                                >
+                                  <UserX className="w-3.5 h-3.5" /> Suspend
+                                </button>
+                                <button
+                                  onClick={() => deleteAgent(agent.id)}
+                                  title="Remove agent"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Remove
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    {filteredAgents.filter(a => ['remote_agent','inoffice_agent','management'].includes(a.role) && a.status === 'active').length === 0 && (
+                      <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400 text-sm">No active agents</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
+
+            {/* ── Suspended / Inactive Agents ── */}
+            {agents.filter(a => a.status === 'suspended' || a.status === 'inactive').length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-red-100 bg-red-50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserX className="w-5 h-5 text-red-600" />
+                    <h3 className="text-base font-semibold text-red-900">
+                      Suspended Agents ({agents.filter(a => a.status === 'suspended' || a.status === 'inactive').length})
+                    </h3>
+                  </div>
+                  <span className="text-xs text-red-500">Cannot log in</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        {['Agent', 'Role', 'Deals', 'Actions'].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredAgents
+                        .filter(a => a.status === 'suspended' || a.status === 'inactive')
+                        .map((agent) => {
+                          const approvedDeals = clients.filter(c => c.agent_id === agent.id && c.status === 'approved').length;
+                          return (
+                            <tr key={agent.id} className="hover:bg-gray-50 opacity-80">
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-500 font-bold text-sm flex-shrink-0">
+                                    {agent.full_name?.charAt(0)?.toUpperCase() || '?'}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-navy-900 text-sm">{agent.full_name}</p>
+                                    <p className="text-xs text-gray-500">{agent.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 capitalize">
+                                  {agent.role.replace(/_/g, ' ')}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-sm text-navy-900">{approvedDeals}</td>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => reinstateAgent(agent.id)}
+                                    title="Reinstate agent"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-semibold hover:bg-green-100 transition-colors"
+                                  >
+                                    <UserCheck className="w-3.5 h-3.5" /> Reinstate
+                                  </button>
+                                  <button
+                                    onClick={() => deleteAgent(agent.id)}
+                                    title="Remove agent permanently"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1287,6 +1434,51 @@ const ManagementDashboard = () => {
                   <UserCheck className="w-4 h-4" /> Approve Agent
                 </button>
                 <button onClick={() => { setShowApproveAgentModal(false); setSelectedPendingAgent(null); }} className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Remove Agent Modal ── */}
+      {showRemoveAgentModal && agentToRemove && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-navy-900">Remove Agent</h3>
+              <button onClick={() => { setShowRemoveAgentModal(false); setAgentToRemove(null); }} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-100 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-sm">
+                    {agentToRemove.full_name?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-navy-900">{agentToRemove.full_name}</p>
+                    <p className="text-sm text-gray-600">{agentToRemove.email}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-red-700 mt-2">
+                  This will permanently remove the agent's profile and they will no longer be able to log in.
+                  Their client records and history will be retained.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={removeAgentConfirmed}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" /> Yes, Remove Agent
+                </button>
+                <button
+                  onClick={() => { setShowRemoveAgentModal(false); setAgentToRemove(null); }}
+                  className="px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
